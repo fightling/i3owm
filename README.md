@@ -15,3 +15,7 @@ Output would be like:
 ```
 ⛅ 11°C 💧55%
 ```
+
+## Get API key for OpenWeatherMap
+
+Get your free API-key at https://openweathermap.org/price.
