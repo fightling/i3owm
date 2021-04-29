@@ -87,7 +87,7 @@ OPTIONS:
                                  {deg_icon}      Wind direction, (meteorological) as arrow icon
                                  {speed}         Wind speed, meter/sec
                                  {visibility}    Visibility, meter
-                                 {visibility_km} vVisibility, kilometer
+                                 {visibility_km} Visibility, kilometer
                                  {rain.1h}       Rain volume for the last 1 hour, mm
                                  {rain.3h}       Rain volume for the last 3 hours, mm
                                  {snow.1h}       Snow volume for the last 1 hour, mm
