@@ -48,7 +48,8 @@ Output would be like:
 {main}          Group of weather parameters (Rain, Snow, Extreme etc.)
 {description}   Weather condition within the group
 {icon}          Weather icon
-{pressure}      Atmospheric pressure (on the sea level, if there is no sea_level or grnd_level data), hPa
+{pressure}      Atmospheric pressure (on the sea level, if there is
+                no sea_level or grnd_level data), hPa
 {humidity}      Humidity, %
 {deg}           Wind direction, degrees (meteorological)
 {deg_icon}      Wind direction, (meteorological) as arrow icon
@@ -59,11 +60,16 @@ Output would be like:
 {rain.3h}       Rain volume for the last 3 hours, mm
 {snow.1h}       Snow volume for the last 1 hour, mm
 {snow.3h}       Snow volume for the last 3 hours, mm
-{temp_min}      Minimum temperature at the moment. This is minimal currently observed temperature (within large megalopolises and urban areas), Kelvin
+{temp_min}      Minimum temperature at the moment. This is minimal
+                currently observed temperature (within large
+                megalopolises and urban areas), Kelvin
 {temp_min_c}    Like {temp_min} but in Celsius
-{temp_max}      Maximum temperature at the moment. This is maximal currently observed temperature (within large megalopolises and urban areas), Kelvin
+{temp_max}      Maximum temperature at the moment. This is maximal
+                currently observed temperature (within large
+                megalopolises and urban areas), Kelvin
 {temp_max_c}    Like {temp_max} but in Celsius
-{feels_like}    Temperature. This temperature parameter accounts for the human perception of weather, Kelvin
+{feels_like}    Temperature. This temperature parameter accounts
+                for the human perception of weather, Kelvin
 {feels_like_c}  Like {feels_like} but in Celsius
 {temp}          Temperature,  Kelvin
 {temp_c}        Like {temp} but in Celsius")
