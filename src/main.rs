@@ -45,7 +45,8 @@ Output would be like:
             Arg::new("format")
                 .about("format string. available keys are:
 {city}          City name
-{main}          Group of weather parameters (Rain, Snow, Extreme etc.)
+{main}          Group of weather parameters (Rain, Snow, Extreme
+                etc.)
 {description}   Weather condition within the group
 {icon}          Weather icon
 {pressure}      Atmospheric pressure (on the sea level, if there is

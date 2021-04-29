@@ -47,7 +47,7 @@ fi
 ## Options
 
 ```
-▶ i3owm -h
+▶ i3owm -h              
 i3owm 0.1.0
 Patrick Hoffmann
 Open Weather extension for i3status
@@ -77,7 +77,7 @@ OPTIONS:
     -f, --format <format>        format string. available keys are:
                                  {city}          City name
                                  {main}          Group of weather parameters (Rain, Snow, Extreme
-                                 etc.)
+                                                 etc.)
                                  {description}   Weather condition within the group
                                  {icon}          Weather icon
                                  {pressure}      Atmospheric pressure (on the sea level, if there is
