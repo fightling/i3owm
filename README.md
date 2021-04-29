@@ -105,5 +105,7 @@ OPTIONS:
                                  {feels_like_c}  Like {feels_like} but in Celsius
                                  {temp}          Temperature,  Kelvin
                                  {temp_c}        Like {temp} but in Celsius
+                                 {temp_c}        Like {temp} but in Celsius
+                                 {update}        Local time of last update, HH:MM
     -p, --position <position>    position of output in JSON when wrapping i3status
 ```

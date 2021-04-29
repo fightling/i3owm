@@ -1,9 +1,10 @@
+extern crate chrono;
 extern crate regex;
 extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
-extern crate chrono;
 
+use chrono::prelude::*;
 use clap::{App, Arg};
 use http::StatusCode;
 use regex::Regex;
@@ -13,155 +14,155 @@ use std::collections::HashMap;
 use std::error;
 use std::sync::mpsc;
 use std::{thread, time};
-use chrono::Local;
 use text_io::read;
 
 fn insert_weather(
     format: &str,
     line: &str,
-    weather: Result<String,String>,
+    weather: Result<String, String>,
     position: usize,
     reverse: bool,
+    update: DateTime<Local>,
 ) -> Result<String, serde_json::Error> {
     let result: String;
     // Parse the string of data into serde_json::Value.
     match weather {
-    Ok(w) => {
-        let v: Value = serde_json::from_str(&w)?;
-        let icons: HashMap<&str, &str> = [
-            ("01d", "🌞"),
-            ("01n", "🌛"),
-            ("02d", "🌤"),
-            ("02n", "🌤"),
-            ("03d", "⛅"),
-            ("03n", "⛅"),
-            ("04d", "⛅"),
-            ("04n", "⛅"),
-            ("09d", "🌧"),
-            ("09n", "🌧"),
-            ("10d", "🌦"),
-            ("10n", "🌦"),
-            ("11d", "🌩"),
-            ("11n", "🌩"),
-            ("13d", "❄"),
-            ("13n", "❄"),
-            ("50d", "🌫"),
-            ("50n", "🌫"),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
-        result = format
-            .replace("{update}", &Local::now().format("%H:%M").to_string())
-            .replace("{city}", v["name"].as_str().unwrap())
-            .replace("{main}", v["weather"][0]["main"].as_str().unwrap())
-            .replace(
-                "{description}",
-                v["weather"][0]["description"].as_str().unwrap(),
-            )
-            .replace(
-                "{icon}",
-                icons
-                    .get(v["weather"][0]["icon"].as_str().unwrap())
-                    .unwrap(),
-            )
-            .replace(
-                "{pressure}",
-                &v["main"]["pressure"].as_i64().unwrap().to_string(),
-            )
-            .replace(
-                "{humidity}",
-                &v["main"]["humidity"].as_i64().unwrap().to_string(),
-            )
-            .replace("{deg}", &v["wind"]["deg"].as_i64().unwrap().to_string())
-            .replace(
-                "{deg_icon}",
-                directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
-            )
-            .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().to_string())
-            .replace(
-                "{visibility}",
-                &v["visibility"].as_i64().unwrap().to_string(),
-            )
-            .replace(
-                "{visibility_km}",
-                &(v["visibility"].as_i64().unwrap() / 1000).to_string(),
-            )
-            .replace(
-                "{rain.1h}",
-                &match v["rain"]["rain.1h"].as_i64() {
-                    Some(v) => v,
-                    None => 0i64,
-                }
-                .to_string(),
-            )
-            .replace(
-                "{rain.3h}",
-                &match v["rain"]["rain.3h"].as_i64() {
-                    Some(v) => v,
-                    None => 0i64,
-                }
-                .to_string(),
-            )
-            .replace(
-                "{snow.1h}",
-                &match v["snow"]["snow.1h"].as_i64() {
-                    Some(v) => v,
-                    None => 0i64,
-                }
-                .to_string(),
-            )
-            .replace(
-                "{snow.3h}",
-                &match v["snow"]["snow.3h"].as_i64() {
-                    Some(v) => v,
-                    None => 0i64,
-                }
-                .to_string(),
-            )
-            .replace(
-                "{temp_min}",
-                &v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
-            )
-            .replace(
-                "{temp_min_c}",
-                &(v["main"]["temp_min"].as_f64().unwrap() - 273.15)
-                    .round()
+        Ok(w) => {
+            let v: Value = serde_json::from_str(&w)?;
+            let icons: HashMap<&str, &str> = [
+                ("01d", "🌞"),
+                ("01n", "🌛"),
+                ("02d", "🌤"),
+                ("02n", "🌤"),
+                ("03d", "⛅"),
+                ("03n", "⛅"),
+                ("04d", "⛅"),
+                ("04n", "⛅"),
+                ("09d", "🌧"),
+                ("09n", "🌧"),
+                ("10d", "🌦"),
+                ("10n", "🌦"),
+                ("11d", "🌩"),
+                ("11n", "🌩"),
+                ("13d", "❄"),
+                ("13n", "❄"),
+                ("50d", "🌫"),
+                ("50n", "🌫"),
+            ]
+            .iter()
+            .cloned()
+            .collect();
+            let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+            result = format
+                .replace("{update}", &update.format("%H:%M").to_string())
+                .replace("{city}", v["name"].as_str().unwrap())
+                .replace("{main}", v["weather"][0]["main"].as_str().unwrap())
+                .replace(
+                    "{description}",
+                    v["weather"][0]["description"].as_str().unwrap(),
+                )
+                .replace(
+                    "{icon}",
+                    icons
+                        .get(v["weather"][0]["icon"].as_str().unwrap())
+                        .unwrap(),
+                )
+                .replace(
+                    "{pressure}",
+                    &v["main"]["pressure"].as_i64().unwrap().to_string(),
+                )
+                .replace(
+                    "{humidity}",
+                    &v["main"]["humidity"].as_i64().unwrap().to_string(),
+                )
+                .replace("{deg}", &v["wind"]["deg"].as_i64().unwrap().to_string())
+                .replace(
+                    "{deg_icon}",
+                    directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
+                )
+                .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().to_string())
+                .replace(
+                    "{visibility}",
+                    &v["visibility"].as_i64().unwrap().to_string(),
+                )
+                .replace(
+                    "{visibility_km}",
+                    &(v["visibility"].as_i64().unwrap() / 1000).to_string(),
+                )
+                .replace(
+                    "{rain.1h}",
+                    &match v["rain"]["rain.1h"].as_i64() {
+                        Some(v) => v,
+                        None => 0i64,
+                    }
                     .to_string(),
-            )
-            .replace(
-                "{temp_max}",
-                &v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
-            )
-            .replace(
-                "{temp_max_c}",
-                &(v["main"]["temp_max"].as_f64().unwrap() - 273.15)
-                    .round()
+                )
+                .replace(
+                    "{rain.3h}",
+                    &match v["rain"]["rain.3h"].as_i64() {
+                        Some(v) => v,
+                        None => 0i64,
+                    }
                     .to_string(),
-            )
-            .replace(
-                "{feels_like}",
-                &v["main"]["temp"].as_f64().unwrap().round().to_string(),
-            )
-            .replace(
-                "{feels_like_c}",
-                &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                    .round()
+                )
+                .replace(
+                    "{snow.1h}",
+                    &match v["snow"]["snow.1h"].as_i64() {
+                        Some(v) => v,
+                        None => 0i64,
+                    }
                     .to_string(),
-            )
-            .replace(
-                "{temp}",
-                &v["main"]["temp"].as_f64().unwrap().round().to_string(),
-            )
-            .replace(
-                "{temp_c}",
-                &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                    .round()
+                )
+                .replace(
+                    "{snow.3h}",
+                    &match v["snow"]["snow.3h"].as_i64() {
+                        Some(v) => v,
+                        None => 0i64,
+                    }
                     .to_string(),
-            );
+                )
+                .replace(
+                    "{temp_min}",
+                    &v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
+                )
+                .replace(
+                    "{temp_min_c}",
+                    &(v["main"]["temp_min"].as_f64().unwrap() - 273.15)
+                        .round()
+                        .to_string(),
+                )
+                .replace(
+                    "{temp_max}",
+                    &v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
+                )
+                .replace(
+                    "{temp_max_c}",
+                    &(v["main"]["temp_max"].as_f64().unwrap() - 273.15)
+                        .round()
+                        .to_string(),
+                )
+                .replace(
+                    "{feels_like}",
+                    &v["main"]["temp"].as_f64().unwrap().round().to_string(),
+                )
+                .replace(
+                    "{feels_like_c}",
+                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
+                        .round()
+                        .to_string(),
+                )
+                .replace(
+                    "{temp}",
+                    &v["main"]["temp"].as_f64().unwrap().round().to_string(),
+                )
+                .replace(
+                    "{temp_c}",
+                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
+                        .round()
+                        .to_string(),
+                );
         }
-        Err(e) => result = e
+        Err(e) => result = e,
     }
     #[derive(Serialize, Deserialize, Debug)]
     struct I3StatusItem {
@@ -274,7 +275,8 @@ Output would be like:
                 for the human perception of weather, Kelvin
 {feels_like_c}  Like {feels_like} but in Celsius
 {temp}          Temperature,  Kelvin
-{temp_c}        Like {temp} but in Celsius",
+{temp_c}        Like {temp} but in Celsius
+{update}        Local time of last update, HH:MM",
                 )
                 .short('f')
                 .long("format")
@@ -315,9 +317,8 @@ Output would be like:
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
-        let mut exit = false;
         tx.send(Err("[offline]".to_string())).unwrap();
-        while !exit {
+        loop {
             let response = reqwest::blocking::get(&url).unwrap();
             match response.status() {
                 StatusCode::OK => {
@@ -327,13 +328,13 @@ Output would be like:
                 _ => {
                     tx.send(Err(format!("[{}]", response.status()).to_string()))
                         .unwrap();
-                    exit = true;
                 }
             }
         }
     });
 
     let mut weather = Err(String::new());
+    let mut update = Local::now();
     loop {
         let mut line: String = read!("{}\n");
         let prefix = line.chars().next().unwrap() == ',';
@@ -341,13 +342,16 @@ Output would be like:
             line.remove(0);
         }
         match rx.try_recv() {
-            Ok(w) => weather = w,
+            Ok(w) => {
+                weather = w;
+                update = Local::now();
+            }
             _ => (),
         }
         if prefix {
             print!(",")
         }
-        match insert_weather(format, &line, weather.clone(), position, reverse) {
+        match insert_weather(format, &line, weather.clone(), position, reverse, update) {
             Ok(l) => line = l,
             _ => (),
         }
