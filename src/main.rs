@@ -17,7 +17,8 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
     let client = reqwest::Client::new();
     let args = App::new("i3owm")
         .version("0.1.0")
-        .about("Open Weather extension for i3status
+        .about(
+            "Open Weather extension for i3status
 
 Example usage in i3config:
 
@@ -29,7 +30,8 @@ Output would be like:
 
     ⛅ 11°C 💧55%
 
-")
+",
+        )
         .author("Patrick Hoffmann")
         .args(&[
             Arg::new("api")
@@ -43,7 +45,8 @@ Output would be like:
                 .long("city")
                 .takes_value(true),
             Arg::new("format")
-                .about("format string. available keys are:
+                .about(
+                    "format string. available keys are:
 {city}          City name
 {main}          Group of weather parameters (Rain, Snow, Extreme
                 etc.)
@@ -73,7 +76,8 @@ Output would be like:
                 for the human perception of weather, Kelvin
 {feels_like_c}  Like {feels_like} but in Celsius
 {temp}          Temperature,  Kelvin
-{temp_c}        Like {temp} but in Celsius")
+{temp_c}        Like {temp} but in Celsius",
+                )
                 .short('f')
                 .long("format")
                 .takes_value(true),
@@ -105,162 +109,161 @@ Output would be like:
         .unwrap();
     let reverse = args.is_present("reverse");
 
-    let res = client.get(&url).send().await?;
-    match res.status() {
-        StatusCode::UNAUTHORIZED => println!("error: please provide API key"),
-        StatusCode::OK => {
-            // Move and borrow value of `res`
-            let body = res.text().await?;
-            //println!("Body:\n{}", body);
+    let mut line: String = read!("{}\n");
+    println!("{}", line);
+    line = read!("{}\n");
+    println!("{}", line);
 
-            // Parse the string of data into serde_json::Value.
-            let v: Value = serde_json::from_str(&body)?;
+    loop {
+        line = read!("{}\n");
 
-            let icons: HashMap<&str, &str> = [
-                ("01d", "🌞"),
-                ("01n", "🌛"),
-                ("02d", "🌤"),
-                ("02n", "🌤"),
-                ("03d", "⛅"),
-                ("03n", "⛅"),
-                ("04d", "⛅"),
-                ("04n", "⛅"),
-                ("09d", "🌧"),
-                ("09n", "🌧"),
-                ("10d", "🌦"),
-                ("10n", "🌦"),
-                ("11d", "🌩"),
-                ("11n", "🌩"),
-                ("13d", "❄"),
-                ("13n", "❄"),
-                ("50d", "🌫"),
-                ("50n", "🌫"),
-            ]
-            .iter()
-            .cloned()
-            .collect();
-            let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
-            let result: String = format
-                .replace("{city}", v["name"].as_str().unwrap())
-                .replace("{main}", v["weather"][0]["main"].as_str().unwrap())
-                .replace(
-                    "{description}",
-                    v["weather"][0]["description"].as_str().unwrap(),
-                )
-                .replace(
-                    "{icon}",
-                    icons
-                        .get(v["weather"][0]["icon"].as_str().unwrap())
-                        .unwrap(),
-                )
-                .replace(
-                    "{pressure}",
-                    &v["main"]["pressure"].as_i64().unwrap().to_string(),
-                )
-                .replace(
-                    "{humidity}",
-                    &v["main"]["humidity"].as_i64().unwrap().to_string(),
-                )
-                .replace("{deg}", &v["wind"]["deg"].as_i64().unwrap().to_string())
-                .replace(
-                    "{deg_icon}",
-                    directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
-                )
-                .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().to_string())
-                .replace(
-                    "{visibility}",
-                    &v["visibility"].as_i64().unwrap().to_string(),
-                )
-                .replace(
-                    "{visibility_km}",
-                    &(v["visibility"].as_i64().unwrap() / 1000).to_string(),
-                )
-                .replace(
-                    "{rain.1h}",
-                    &match v["rain"]["rain.1h"].as_i64() {
-                        Some(v) => v,
-                        None => 0i64,
-                    }
-                    .to_string(),
-                )
-                .replace(
-                    "{rain.3h}",
-                    &match v["rain"]["rain.3h"].as_i64() {
-                        Some(v) => v,
-                        None => 0i64,
-                    }
-                    .to_string(),
-                )
-                .replace(
-                    "{snow.1h}",
-                    &match v["snow"]["snow.1h"].as_i64() {
-                        Some(v) => v,
-                        None => 0i64,
-                    }
-                    .to_string(),
-                )
-                .replace(
-                    "{snow.3h}",
-                    &match v["snow"]["snow.3h"].as_i64() {
-                        Some(v) => v,
-                        None => 0i64,
-                    }
-                    .to_string(),
-                )
-                .replace(
-                    "{temp_min}",
-                    &v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
-                )
-                .replace(
-                    "{temp_min_c}",
-                    &(v["main"]["temp_min"].as_f64().unwrap() - 273.15)
-                        .round()
+        let prefix = line.chars().next().unwrap() == ',';
+
+        if prefix {
+            line.remove(0);
+        }
+        let res = client.get(&url).send().await?;
+        match res.status() {
+            StatusCode::UNAUTHORIZED => println!("error: please provide API key"),
+            StatusCode::OK => {
+                // Move and borrow value of `res`
+                let body = res.text().await?;
+                //println!("Body:\n{}", body);
+
+                // Parse the string of data into serde_json::Value.
+                let v: Value = serde_json::from_str(&body)?;
+
+                let icons: HashMap<&str, &str> = [
+                    ("01d", "🌞"),
+                    ("01n", "🌛"),
+                    ("02d", "🌤"),
+                    ("02n", "🌤"),
+                    ("03d", "⛅"),
+                    ("03n", "⛅"),
+                    ("04d", "⛅"),
+                    ("04n", "⛅"),
+                    ("09d", "🌧"),
+                    ("09n", "🌧"),
+                    ("10d", "🌦"),
+                    ("10n", "🌦"),
+                    ("11d", "🌩"),
+                    ("11n", "🌩"),
+                    ("13d", "❄"),
+                    ("13n", "❄"),
+                    ("50d", "🌫"),
+                    ("50n", "🌫"),
+                ]
+                .iter()
+                .cloned()
+                .collect();
+                let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+                let result: String = format
+                    .replace("{city}", v["name"].as_str().unwrap())
+                    .replace("{main}", v["weather"][0]["main"].as_str().unwrap())
+                    .replace(
+                        "{description}",
+                        v["weather"][0]["description"].as_str().unwrap(),
+                    )
+                    .replace(
+                        "{icon}",
+                        icons
+                            .get(v["weather"][0]["icon"].as_str().unwrap())
+                            .unwrap(),
+                    )
+                    .replace(
+                        "{pressure}",
+                        &v["main"]["pressure"].as_i64().unwrap().to_string(),
+                    )
+                    .replace(
+                        "{humidity}",
+                        &v["main"]["humidity"].as_i64().unwrap().to_string(),
+                    )
+                    .replace("{deg}", &v["wind"]["deg"].as_i64().unwrap().to_string())
+                    .replace(
+                        "{deg_icon}",
+                        directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
+                    )
+                    .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().to_string())
+                    .replace(
+                        "{visibility}",
+                        &v["visibility"].as_i64().unwrap().to_string(),
+                    )
+                    .replace(
+                        "{visibility_km}",
+                        &(v["visibility"].as_i64().unwrap() / 1000).to_string(),
+                    )
+                    .replace(
+                        "{rain.1h}",
+                        &match v["rain"]["rain.1h"].as_i64() {
+                            Some(v) => v,
+                            None => 0i64,
+                        }
                         .to_string(),
-                )
-                .replace(
-                    "{temp_max}",
-                    &v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
-                )
-                .replace(
-                    "{temp_max_c}",
-                    &(v["main"]["temp_max"].as_f64().unwrap() - 273.15)
-                        .round()
+                    )
+                    .replace(
+                        "{rain.3h}",
+                        &match v["rain"]["rain.3h"].as_i64() {
+                            Some(v) => v,
+                            None => 0i64,
+                        }
                         .to_string(),
-                )
-                .replace(
-                    "{feels_like}",
-                    &v["main"]["temp"].as_f64().unwrap().round().to_string(),
-                )
-                .replace(
-                    "{feels_like_c}",
-                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                        .round()
+                    )
+                    .replace(
+                        "{snow.1h}",
+                        &match v["snow"]["snow.1h"].as_i64() {
+                            Some(v) => v,
+                            None => 0i64,
+                        }
                         .to_string(),
-                )
-                .replace(
-                    "{temp}",
-                    &v["main"]["temp"].as_f64().unwrap().round().to_string(),
-                )
-                .replace(
-                    "{temp_c}",
-                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                        .round()
+                    )
+                    .replace(
+                        "{snow.3h}",
+                        &match v["snow"]["snow.3h"].as_i64() {
+                            Some(v) => v,
+                            None => 0i64,
+                        }
                         .to_string(),
-                );
-
-            let mut line: String = read!("{}\n");
-            println!("{}", line);
-            line = read!("{}\n");
-            println!("{}", line);
-
-            loop {
-                line = read!("{}\n");
-
-                let prefix = line.chars().next().unwrap() == ',';
-
-                if prefix {
-                    line.remove(0);
-                }
+                    )
+                    .replace(
+                        "{temp_min}",
+                        &v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
+                    )
+                    .replace(
+                        "{temp_min_c}",
+                        &(v["main"]["temp_min"].as_f64().unwrap() - 273.15)
+                            .round()
+                            .to_string(),
+                    )
+                    .replace(
+                        "{temp_max}",
+                        &v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
+                    )
+                    .replace(
+                        "{temp_max_c}",
+                        &(v["main"]["temp_max"].as_f64().unwrap() - 273.15)
+                            .round()
+                            .to_string(),
+                    )
+                    .replace(
+                        "{feels_like}",
+                        &v["main"]["temp"].as_f64().unwrap().round().to_string(),
+                    )
+                    .replace(
+                        "{feels_like_c}",
+                        &(v["main"]["temp"].as_f64().unwrap() - 273.15)
+                            .round()
+                            .to_string(),
+                    )
+                    .replace(
+                        "{temp}",
+                        &v["main"]["temp"].as_f64().unwrap().round().to_string(),
+                    )
+                    .replace(
+                        "{temp_c}",
+                        &(v["main"]["temp"].as_f64().unwrap() - 273.15)
+                            .round()
+                            .to_string(),
+                    );
 
                 #[derive(Serialize, Deserialize, Debug)]
                 struct I3StatusItem {
@@ -313,8 +316,7 @@ Output would be like:
                 }
                 println!("{}", after);
             }
+            _ => print!("error: could not reach OpenWeatherMap website"),
         }
-        _ => print!("error: could not reach OpenWeatherMap website"),
     }
-    Ok(())
 }
