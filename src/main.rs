@@ -81,7 +81,7 @@ fn insert_weather(
                     "{deg_icon}",
                     directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
                 )
-                .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().to_string())
+                .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().round().to_string())
                 .replace(
                     "{visibility}",
                     &v["visibility"].as_i64().unwrap().to_string(),
