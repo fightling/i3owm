@@ -6,6 +6,8 @@ edition = "2018"
 description = "Open Weather extension for i3status"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+documentation = "https://github.com/fightling/i3owm"
+homepage = "https://github.com/fightling/i3owm"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
