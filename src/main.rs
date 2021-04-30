@@ -234,15 +234,27 @@ Output would be like:
         .author("Patrick Hoffmann")
         .args(&[
             Arg::new("api")
-                .about("OpenWeatherMap API key (get one at https://openweathermap.org/api)")
+                .about("OpenWeatherMap API key
+(get one at https://openweathermap.org/api)")
                 .short('k')
                 .long("api-key")
                 .takes_value(true),
             Arg::new("city")
-                .about("location city")
+                .about("location city
+(city's name, comma, 2-letter country code (ISO3166))")
                 .short('c')
                 .long("city")
-                .takes_value(true),
+                .takes_value(true)
+                .required_unless_present("city_id")
+                .conflicts_with("city_id"),
+            Arg::new("city_id")
+                .about("location city ID
+(search your city at https://openweathermap.org/find and take ID out of the link you get)")
+                .short('i')
+                .long("city_id")
+                .takes_value(true)
+                .required_unless_present("city")
+                .conflicts_with("city"),
             Arg::new("format")
                 .about(
                     "format string. available keys are:
@@ -292,15 +304,22 @@ Output would be like:
                 .long("reverse"),
         ])
         .get_matches();
-    let city = args.value_of("city").unwrap_or("Berlin");
+    let city = args.value_of("city").unwrap_or("Berlin,DE");
+    let city_id = args.value_of("city_id").unwrap_or("");
     let apikey = args.value_of("api").unwrap_or("");
     let format = args
         .value_of("format")
         .unwrap_or("{icon} {current} {temp_c} °C");
-    let url = format!(
-        "https://api.openweathermap.org/data/2.5/weather?q={}&appid={}",
-        city, apikey
-    );
+    let url = match city.is_empty() {
+        false => format!(
+            "https://api.openweathermap.org/data/2.5/weather?q={}&appid={}",
+            city, apikey
+        ),
+        true => format!(
+            "https://api.openweathermap.org/data/2.5/weather?id={}&appid={}",
+            city_id, apikey
+        ),
+    };
     let position = args
         .value_of("position")
         .unwrap_or("0")

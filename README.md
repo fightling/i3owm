@@ -72,8 +72,13 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-    -k, --api-key <api>          OpenWeatherMap API key (get one at https://openweathermap.org/api)
+    -k, --api-key <api>          OpenWeatherMap API key
+                                 (get one at https://openweathermap.org/api)
     -c, --city <city>            location city
+                                 (city's name, comma, 2-letter country code (ISO3166))
+    -i, --city_id <city_id>      location city ID
+                                 (search your city at https://openweathermap.org/find and take ID
+                                 out of the link you get)
     -f, --format <format>        format string. available keys are:
                                  {city}          City name
                                  {main}          Group of weather parameters (Rain, Snow, Extreme
@@ -104,7 +109,6 @@ OPTIONS:
                                                  for the human perception of weather, Kelvin
                                  {feels_like_c}  Like {feels_like} but in Celsius
                                  {temp}          Temperature,  Kelvin
-                                 {temp_c}        Like {temp} but in Celsius
                                  {temp_c}        Like {temp} but in Celsius
                                  {update}        Local time of last update, HH:MM
     -p, --position <position>    position of output in JSON when wrapping i3status
