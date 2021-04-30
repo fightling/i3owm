@@ -22,6 +22,7 @@ fn insert_weather(
     weather: Result<String, String>,
     position: usize,
     reverse: bool,
+    units: &str,
     update: DateTime<Local>,
 ) -> Result<String, serde_json::Error> {
     let result: String;
@@ -126,41 +127,25 @@ fn insert_weather(
                     &v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
                 )
                 .replace(
-                    "{temp_min_c}",
-                    &(v["main"]["temp_min"].as_f64().unwrap() - 273.15)
-                        .round()
-                        .to_string(),
-                )
-                .replace(
                     "{temp_max}",
                     &v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
-                )
-                .replace(
-                    "{temp_max_c}",
-                    &(v["main"]["temp_max"].as_f64().unwrap() - 273.15)
-                        .round()
-                        .to_string(),
                 )
                 .replace(
                     "{feels_like}",
                     &v["main"]["temp"].as_f64().unwrap().round().to_string(),
                 )
                 .replace(
-                    "{feels_like_c}",
-                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                        .round()
-                        .to_string(),
-                )
-                .replace(
                     "{temp}",
                     &v["main"]["temp"].as_f64().unwrap().round().to_string(),
                 )
                 .replace(
-                    "{temp_c}",
-                    &(v["main"]["temp"].as_f64().unwrap() - 273.15)
-                        .round()
-                        .to_string(),
-                );
+                    "{temp_unit}",
+                    &match units { "standard" => "K", "metric" => "°C", "imperial" => "°F", _ => "" }
+                )
+                .replace(
+                    "{speed_unit}",
+                    &match units { "standard" => "m/s", "metric" => "m/s", "imperial" => "mi/h", _ => "" }
+                )
         }
         Err(e) => result = e,
     }
@@ -246,7 +231,8 @@ Output would be like:
                 .long("city")
                 .takes_value(true)
                 .required_unless_present("city_id")
-                .conflicts_with("city_id"),
+                .conflicts_with("city_id")
+                .default_value("Berlin,DE"),
             Arg::new("city_id")
                 .about("location city ID
 (search your city at https://openweathermap.org/find and take ID out of the link you get)")
@@ -256,8 +242,8 @@ Output would be like:
                 .required_unless_present("city")
                 .conflicts_with("city"),
             Arg::new("format")
-                .about(
-                    "format string. available keys are:
+                .about("format string")
+                .long_about( "available keys are:
 {city}          City name
 {main}          Group of weather parameters (Rain, Snow, Extreme
                 etc.)
@@ -268,7 +254,7 @@ Output would be like:
 {humidity}      Humidity, %
 {deg}           Wind direction, degrees (meteorological)
 {deg_icon}      Wind direction, (meteorological) as arrow icon
-{speed}         Wind speed, meter/sec
+{speed}         Wind speed, {speed_unit}
 {visibility}    Visibility, meter
 {visibility_km} Visibility, kilometer
 {rain.1h}       Rain volume for the last 1 hour, mm
@@ -277,21 +263,23 @@ Output would be like:
 {snow.3h}       Snow volume for the last 3 hours, mm
 {temp_min}      Minimum temperature at the moment. This is minimal
                 currently observed temperature (within large
-                megalopolises and urban areas), Kelvin
-{temp_min_c}    Like {temp_min} but in Celsius
+                megalopolises and urban areas), {temp_unit}
 {temp_max}      Maximum temperature at the moment. This is maximal
                 currently observed temperature (within large
-                megalopolises and urban areas), Kelvin
-{temp_max_c}    Like {temp_max} but in Celsius
+                megalopolises and urban areas), {temp_unit}
 {feels_like}    Temperature. This temperature parameter accounts
-                for the human perception of weather, Kelvin
-{feels_like_c}  Like {feels_like} but in Celsius
-{temp}          Temperature,  Kelvin
-{temp_c}        Like {temp} but in Celsius
-{update}        Local time of last update, HH:MM",
+                for the human perception of weather, {temp_unit}
+{temp}          Temperature, {temp_unit}
+{temp_unit}     Temperature
+                (standard=K, metric=°C, imperial=°F)
+{speed_unit}    Wind speed unit
+                (standard=m/s, metric=m/s, imperial=mi/h
+{update}        Local time of last update, HH:MM
+",
                 )
                 .short('f')
                 .long("format")
+                .default_value("{city} {icon} {current} {temp}{temp_unit} {humidity}%")
                 .takes_value(true),
             Arg::new("position")
                 .about("position of output in JSON when wrapping i3status")
@@ -302,22 +290,28 @@ Output would be like:
                 .about("reverse position (from right)")
                 .short('r')
                 .long("reverse"),
+            Arg::new("units")
+                .about("use imperial units")
+                .short('u')
+                .long("units")
+                .takes_value(true)
+                .possible_values(&["metric", "imperial", "standard"])
+                .default_value("metric"),
         ])
         .get_matches();
-    let city = args.value_of("city").unwrap_or("Berlin,DE");
+    let city = args.value_of("city").unwrap();
     let city_id = args.value_of("city_id").unwrap_or("");
     let apikey = args.value_of("api").unwrap_or("");
-    let format = args
-        .value_of("format")
-        .unwrap_or("{icon} {current} {temp_c} °C");
+    let units = args.value_of("units").unwrap();
+    let format = args.value_of("format").unwrap();
     let url = match city.is_empty() {
         false => format!(
-            "https://api.openweathermap.org/data/2.5/weather?q={}&appid={}",
-            city, apikey
+            "https://api.openweathermap.org/data/2.5/weather?q={}&units={}&appid={}",
+            city, units, apikey
         ),
         true => format!(
-            "https://api.openweathermap.org/data/2.5/weather?id={}&appid={}",
-            city_id, apikey
+            "https://api.openweathermap.org/data/2.5/weather?id={}&units={}&appid={}",
+            city_id, units, apikey
         ),
     };
     let position = args
@@ -370,7 +364,7 @@ Output would be like:
         if prefix {
             print!(",")
         }
-        match insert_weather(format, &line, weather.clone(), position, reverse, update) {
+        match insert_weather(format, &line, weather.clone(), position, reverse, units, update) {
             Ok(l) => line = l,
             _ => (),
         }
