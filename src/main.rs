@@ -286,6 +286,12 @@ Output would be like:
                 .short('p')
                 .long("position")
                 .takes_value(true),
+            Arg::new("lang")
+                .about("two character language code of weather descriptions
+(default is 'en')")
+                .short('l')
+                .long("lang")
+                .takes_value(true),
             Arg::new("reverse")
                 .about("reverse position (from right)")
                 .short('r')
@@ -304,14 +310,15 @@ Output would be like:
     let apikey = args.value_of("api").unwrap_or("");
     let units = args.value_of("units").unwrap();
     let format = args.value_of("format").unwrap();
+    let lang = args.value_of("lang").unwrap_or("en");
     let url = match city.is_empty() {
         false => format!(
-            "https://api.openweathermap.org/data/2.5/weather?q={}&units={}&appid={}",
-            city, units, apikey
+            "https://api.openweathermap.org/data/2.5/weather?q={}&units={}&lang={}&appid={}",
+            city, units, lang, apikey
         ),
         true => format!(
-            "https://api.openweathermap.org/data/2.5/weather?id={}&units={}&appid={}",
-            city_id, units, apikey
+            "https://api.openweathermap.org/data/2.5/weather?id={}&units={}&lang={}&appid={}",
+            city_id, units, lang, apikey
         ),
     };
     let position = args

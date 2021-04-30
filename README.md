@@ -55,7 +55,8 @@ Open Weather extension for i3status
 Example usage in i3config:
 
   bar {
-    status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit} 💧{humidity}%'
+    status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit}
+💧{humidity}%'
   }
 
 Output would be like:
@@ -126,9 +127,14 @@ OPTIONS:
             {update}        Local time of last update, HH:MM
              [default: {city} {icon} {current} {temp}{temp_unit} {humidity}%]
 
+    -l, --lang <lang>
+            two character language code of weather descriptions
+            (default is 'en')
+
     -p, --position <position>
             position of output in JSON when wrapping i3status
 
     -u, --units <units>
             use imperial units [default: metric] [possible values: metric, imperial, standard]
+
 ```
