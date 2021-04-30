@@ -207,7 +207,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 Example usage in i3config:
 
   bar {
-    status_command i3status | i3owm -p 2 -r -k <key> -c Berlin -f '{icon} {temp_c}°C 💧{humidity}%'
+    status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit} 💧{humidity}%'
   }
 
 Output would be like:
