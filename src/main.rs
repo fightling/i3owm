@@ -53,7 +53,7 @@ fn insert_weather(
             .iter()
             .cloned()
             .collect();
-            let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+            let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖", "↑"];
             result = format
                 .replace("{update}", &update.format("%H:%M").to_string())
                 .replace("{city}", v["name"].as_str().unwrap())
