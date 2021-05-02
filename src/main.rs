@@ -5,7 +5,7 @@ extern crate serde;
 extern crate serde_json;
 
 use chrono::prelude::*;
-use clap::{App, Arg};
+use clap::{App, Arg, crate_version};
 use http::StatusCode;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -200,7 +200,7 @@ fn insert_weather(
 fn main() -> Result<(), Box<dyn error::Error>> {
     // fetch arguments
     let args = App::new("i3owm")
-        .version("0.1.0")
+        .version(crate_version!())
         .about(
             "Open Weather extension for i3status
 

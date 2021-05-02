@@ -32,7 +32,7 @@ cargo install i3owm
 
 ```
 ▶ i3owm --help              
-i3owm 0.1.0
+i3owm 0.1.3
 Patrick Hoffmann
 Open Weather extension for i3status
 
