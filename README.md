@@ -28,15 +28,6 @@ To install this from Rust community's crate registry, one must install Rust. The
 cargo install i3owm
 ```
 
-Then add this to your `.profile`:
-
-```bash
-# set PATH so it includes user's private ~/.cargo/bin if it exists
-if [ -d "$HOME/.cargo/bin" ] ; then
-    PATH="$HOME/.cargo/bin:$PATH"
-fi
-```
-
 ## Options
 
 ```
