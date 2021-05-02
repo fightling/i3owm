@@ -20,19 +20,12 @@ Output would be like:
 
 Get your free API-key at https://openweathermap.org/price.
 
+## Installation
 
-## Build project
-
-```
-cargo build
-```
-
-## Install project
-
-Within the project directory run:
+To install this from Rust community's crate registry, one must install Rust. Then do this in the terminal:
 
 ```
-cargo install --path .
+cargo install i3owm
 ```
 
 Then add this to your `.profile`:
