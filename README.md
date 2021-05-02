@@ -102,9 +102,9 @@ OPTIONS:
             {pressure}      Atmospheric pressure (on the sea level, if there is
                             no sea_level or grnd_level data), hPa
             {humidity}      Humidity, %
-            {deg}           Wind direction, degrees (meteorological)
-            {deg_icon}      Wind direction, (meteorological) as arrow icon
-            {speed}         Wind speed, {speed_unit}
+            {wind}          Wind direction, degrees (meteorological)
+            {wind_icon}     Wind direction, (meteorological) as arrow icon
+            {wind_speed}    Wind speed, {speed_unit}
             {visibility}    Visibility, meter
             {visibility_km} Visibility, kilometer
             {rain.1h}       Rain volume for the last 1 hour, mm
@@ -136,5 +136,4 @@ OPTIONS:
 
     -u, --units <units>
             use imperial units [default: metric] [possible values: metric, imperial, standard]
-
 ```

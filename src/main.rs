@@ -76,12 +76,12 @@ fn insert_weather(
                     "{humidity}",
                     &v["main"]["humidity"].as_i64().unwrap().to_string(),
                 )
-                .replace("{deg}", &v["wind"]["deg"].as_i64().unwrap().to_string())
+                .replace("{wind}", &v["wind"]["deg"].as_i64().unwrap().to_string())
                 .replace(
-                    "{deg_icon}",
+                    "{wind_icon}",
                     directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize],
                 )
-                .replace("{speed}", &v["wind"]["speed"].as_f64().unwrap().round().to_string())
+                .replace("{wind_speed}", &v["wind"]["speed"].as_f64().unwrap().round().to_string())
                 .replace(
                     "{visibility}",
                     &v["visibility"].as_i64().unwrap().to_string(),
@@ -252,9 +252,9 @@ Output would be like:
 {pressure}      Atmospheric pressure (on the sea level, if there is
                 no sea_level or grnd_level data), hPa
 {humidity}      Humidity, %
-{deg}           Wind direction, degrees (meteorological)
-{deg_icon}      Wind direction, (meteorological) as arrow icon
-{speed}         Wind speed, {speed_unit}
+{wind}          Wind direction, degrees (meteorological)
+{wind_icon}     Wind direction, (meteorological) as arrow icon
+{wind_speed}    Wind speed, {speed_unit}
 {visibility}    Visibility, meter
 {visibility_km} Visibility, kilometer
 {rain.1h}       Rain volume for the last 1 hour, mm
