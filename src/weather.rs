@@ -231,6 +231,7 @@ fn icon(icon_id: &str) -> &str {
     return icons.get(icon_id).unwrap_or(&"🚫");
 }
 
+// format weather from given data into string
 fn formatter(format: &str, data: &HashMap<&str, String>) -> String {
     let mut result = format.to_string();
     for (k, v) in data {
