@@ -117,6 +117,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     println!("{}", line);
     // remeber newest weather update and begin with offline message
     let mut current = "[offline]".to_string();
+    let convert = weather::converter(units);
     loop {
         let mut line: String = read!("{}\n");
         // handle prefix comma
@@ -125,7 +126,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             print!(",")
         }
         // update current weather info if there is an update available
-        match weather::update(format, &owm, units) {
+        match weather::update(format, &owm, &convert) {
             Some(update) => current = update,
             _ => (),
         }

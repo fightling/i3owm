@@ -89,119 +89,143 @@ pub fn init(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver {
     return rx;
 }
 
+pub fn converter(units: &str) -> HashMap<&str, Box<dyn Fn(&Value) -> String>> {
+    let mut data: HashMap<&str, Box<dyn Fn(&Value) -> String>> = HashMap::new();
+    data.insert(
+        "{update}",
+        Box::new(|_v| Local::now().format("%H:%M").to_string()),
+    );
+    data.insert("{city}", Box::new(|v| v["name"].to_string()));
+    data.insert("{main}", Box::new(|v| v["weather"][0]["main"].to_string()));
+    data.insert(
+        "{description}",
+        Box::new(|v| v["weather"][0]["description"].to_string()),
+    );
+    data.insert(
+        "{icon}",
+        Box::new(|v| icon(v["weather"][0]["icon"].as_str().unwrap()).to_string()),
+    );
+    data.insert(
+        "{pressure}",
+        Box::new(|v| v["main"]["pressure"].to_string()),
+    );
+    data.insert(
+        "{humidity}",
+        Box::new(|v| v["main"]["humidity"].to_string()),
+    );
+    data.insert("{wind}", Box::new(|v| v["wind"]["deg"].to_string()));
+    let direction_icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+    let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+    let deg = move |v: &Value| v["wind"]["deg"].as_f64().unwrap();
+    let dir = move |v: &Value| (deg(v) / 45.0).round() as usize % 8;
+    data.insert("{wind_deg}", Box::new(move |v| deg(v).round().to_string()));
+    data.insert("{wind}", Box::new(move |v| directions[dir(v)].to_string()));
+    data.insert(
+        "{wind_icon}",
+        Box::new(move |v| direction_icons[dir(v)].to_string()),
+    );
+    data.insert("{deg_unit}", Box::new(|_v| "°".to_string()));
+    data.insert(
+        "{wind_speed}",
+        Box::new(|v| v["wind"]["speed"].as_f64().unwrap().round().to_string()),
+    );
+    data.insert("{visibility}", Box::new(|v| v["visibility"].to_string()));
+    data.insert(
+        "{visibility_km}",
+        Box::new(|v| (v["visibility"].as_i64().unwrap() / 1000).to_string()),
+    );
+    data.insert(
+        "{rain.1h}",
+        Box::new(|v| {
+            match v["rain"]["rain.1h"].as_i64() {
+                Some(v) => v,
+                None => 0i64,
+            }
+            .to_string()
+        }),
+    );
+    data.insert(
+        "{rain.3h}",
+        Box::new(|v| {
+            match v["rain"]["rain.3h"].as_i64() {
+                Some(v) => v,
+                None => 0i64,
+            }
+            .to_string()
+        }),
+    );
+    data.insert(
+        "{snow.1h}",
+        Box::new(|v| {
+            match v["snow"]["snow.1h"].as_i64() {
+                Some(v) => v,
+                None => 0i64,
+            }
+            .to_string()
+        }),
+    );
+    data.insert(
+        "{snow.3h}",
+        Box::new(|v| {
+            match v["snow"]["snow.3h"].as_i64() {
+                Some(v) => v,
+                None => 0i64,
+            }
+            .to_string()
+        }),
+    );
+    data.insert(
+        "{temp_min}",
+        Box::new(|v| v["main"]["temp_min"].as_f64().unwrap().round().to_string()),
+    );
+    data.insert(
+        "{temp_max}",
+        Box::new(|v| v["main"]["temp_max"].as_f64().unwrap().round().to_string()),
+    );
+    data.insert(
+        "{feels_like}",
+        Box::new(|v| v["main"]["temp"].as_f64().unwrap().round().to_string()),
+    );
+    data.insert(
+        "{temp}",
+        Box::new(|v| v["main"]["temp"].as_f64().unwrap().round().to_string()),
+    );
+    data.insert(
+        "{temp_unit}",
+        Box::new(match units {
+            "standard" => |_v| "K".to_string(),
+            "metric" => |_v| "°C".to_string(),
+            "imperial" => |_v| "°F".to_string(),
+            _ => |_v| "".to_string(),
+        }),
+    );
+    data.insert(
+        "{speed_unit}",
+        Box::new(match units {
+            "standard" => |_v| "m/s".to_string(),
+            "metric" => |_v| "m/s".to_string(),
+            "imperial" => |_v| "mi/h".to_string(),
+            _ => |_v| "".to_string(),
+        }),
+    );
+    return data;
+}
+
 // get some weather update or None (if there is nothing new)
 pub fn update(
     format: &str,
     rx: &mpsc::Receiver<result::Result<String, String>>,
-    units: &str,
+    convert: &HashMap<&str, Box<dyn Fn(&Value) -> String>>,
 ) -> Option<String> {
     match rx.try_recv() {
         Ok(response) => match response {
             Ok(json) => match serde_json::from_str(&json) {
                 Ok(w) => {
-                    let v: Value = w;
-                    let mut data = HashMap::new();
-                    data.insert("{update}", Local::now().format("%H:%M").to_string());
-                    data.insert("{city}", v["name"].to_string());
-                    data.insert("{main}", v["weather"][0]["main"].to_string());
-                    data.insert("{description}", v["weather"][0]["description"].to_string());
-                    data.insert(
-                        "{icon}",
-                        icon(v["weather"][0]["icon"].as_str().unwrap()).to_string(),
-                    );
-                    data.insert("{pressure}", v["main"]["pressure"].to_string());
-                    data.insert("{humidity}", v["main"]["humidity"].to_string());
-                    data.insert("{wind}", v["wind"]["deg"].to_string());
-                    let direction_icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-                    let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
-                    let deg = &v["wind"]["deg"].as_f64().unwrap();
-                    let dir = (deg / 45.0).round() as usize % 8;
-                    data.insert("{wind_deg}", deg.round().to_string());
-                    data.insert("{wind}", directions[dir].to_string());
-                    data.insert("{wind_icon}", direction_icons[dir].to_string());
-                    data.insert("{deg_unit}", "°".to_string());
-                    data.insert(
-                        "{wind_speed}",
-                        v["wind"]["speed"].as_f64().unwrap().round().to_string(),
-                    );
-                    data.insert("{visibility}", v["visibility"].to_string());
-                    data.insert(
-                        "{visibility_km}",
-                        (v["visibility"].as_i64().unwrap() / 1000).to_string(),
-                    );
-                    data.insert(
-                        "{rain.1h}",
-                        match v["rain"]["rain.1h"].as_i64() {
-                            Some(v) => v,
-                            None => 0i64,
-                        }
-                        .to_string(),
-                    );
-                    data.insert(
-                        "{rain.3h}",
-                        match v["rain"]["rain.3h"].as_i64() {
-                            Some(v) => v,
-                            None => 0i64,
-                        }
-                        .to_string(),
-                    );
-                    data.insert(
-                        "{snow.1h}",
-                        match v["snow"]["snow.1h"].as_i64() {
-                            Some(v) => v,
-                            None => 0i64,
-                        }
-                        .to_string(),
-                    );
-                    data.insert(
-                        "{snow.3h}",
-                        match v["snow"]["snow.3h"].as_i64() {
-                            Some(v) => v,
-                            None => 0i64,
-                        }
-                        .to_string(),
-                    );
-                    data.insert(
-                        "{temp_min}",
-                        v["main"]["temp_min"].as_f64().unwrap().round().to_string(),
-                    );
-                    data.insert(
-                        "{temp_max}",
-                        v["main"]["temp_max"].as_f64().unwrap().round().to_string(),
-                    );
-                    data.insert(
-                        "{feels_like}",
-                        v["main"]["temp"].as_f64().unwrap().round().to_string(),
-                    );
-                    data.insert(
-                        "{temp}",
-                        v["main"]["temp"].as_f64().unwrap().round().to_string(),
-                    );
-                    data.insert(
-                        "{temp_unit}",
-                        match units {
-                            "standard" => "K",
-                            "metric" => "°C",
-                            "imperial" => "°F",
-                            _ => "",
-                        }
-                        .to_string(),
-                    );
-                    data.insert(
-                        "{speed_unit}",
-                        match units {
-                            "standard" => "m/s",
-                            "metric" => "m/s",
-                            "imperial" => "mi/h",
-                            _ => "",
-                        }
-                        .to_string(),
-                    );
-                    return Some(formatter(format, &data));
+                    return Some(formatter(format, w, convert));
                 }
                 Err(_e) => return Some("[error]".to_string()),
             },
-            Err(_e) => return Some("[offline]".to_string()),
+            Err(e) => return Some(e),
         },
         Err(_e) => return None,
     }
@@ -236,10 +260,14 @@ fn icon(icon_id: &str) -> &str {
 }
 
 // format weather from given data into string
-fn formatter(format: &str, data: &HashMap<&str, String>) -> String {
+fn formatter(
+    format: &str,
+    w: Value,
+    data: &HashMap<&str, Box<dyn Fn(&Value) -> String>>,
+) -> String {
     let mut result = format.to_string();
     for (k, v) in data {
-        result = result.replace(k, v);
+        result = result.replace(k, &v(&w));
     }
     return result;
 }
