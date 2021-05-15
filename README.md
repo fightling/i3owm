@@ -32,7 +32,7 @@ cargo install i3owm
 
 ```
 ▶ i3owm --help              
-i3owm 0.1.4
+i3owm 0.1.5
 Patrick Hoffmann
 Open Weather extension for i3status
 
@@ -86,8 +86,9 @@ OPTIONS:
             {pressure}      Atmospheric pressure (on the sea level, if there is
                             no sea_level or grnd_level data), hPa
             {humidity}      Humidity, %
-            {wind}          Wind direction, degrees (meteorological)
-            {wind_icon}     Wind direction, (meteorological) as arrow icon
+            {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
+            {wind_icon}     Wind direction as arrow icon
+            {wind_deg}      Wind direction, degrees (meteorological)
             {wind_speed}    Wind speed, {speed_unit}
             {visibility}    Visibility, meter
             {visibility_km} Visibility, kilometer

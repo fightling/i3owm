@@ -21,9 +21,11 @@ pub fn help() -> &'static str {
     {pressure}      Atmospheric pressure (on the sea level, if there is
     no sea_level or grnd_level data), hPa
     {humidity}      Humidity, %
-    {wind}          Wind direction, degrees (meteorological)
-    {wind_icon}     Wind direction, (meteorological) as arrow icon
+    {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
+    {wind_icon}     Wind direction as arrow icon
     {wind_speed}    Wind speed, {speed_unit}
+    {wind_deg}      Wind direction, degrees (meteorological)
+    {deg_unit}      Direction unit (degrees: °)
     {visibility}    Visibility, meter
     {visibility_km} Visibility, kilometer
     {rain.1h}       Rain volume for the last 1 hour, mm
@@ -98,7 +100,6 @@ pub fn update(
             Ok(json) => match serde_json::from_str(&json) {
                 Ok(w) => {
                     let v: Value = w;
-                    let directions = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖", "↑"];
                     let mut data = HashMap::new();
                     data.insert("{update}", Local::now().format("%H:%M").to_string());
                     data.insert("{city}", v["name"].to_string());
@@ -111,11 +112,14 @@ pub fn update(
                     data.insert("{pressure}", v["main"]["pressure"].to_string());
                     data.insert("{humidity}", v["main"]["humidity"].to_string());
                     data.insert("{wind}", v["wind"]["deg"].to_string());
-                    data.insert(
-                        "{wind_icon}",
-                        directions[(&v["wind"]["deg"].as_f64().unwrap() / 45.0).round() as usize]
-                            .to_string(),
-                    );
+                    let direction_icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+                    let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+                    let deg = &v["wind"]["deg"].as_f64().unwrap();
+                    let dir = (deg / 45.0).round() as usize % 8;
+                    data.insert("{wind_deg}", deg.round().to_string());
+                    data.insert("{wind}", directions[dir].to_string());
+                    data.insert("{wind_icon}", direction_icons[dir].to_string());
+                    data.insert("{deg_unit}", "°".to_string());
                     data.insert(
                         "{wind_speed}",
                         v["wind"]["speed"].as_f64().unwrap().round().to_string(),
@@ -195,9 +199,9 @@ pub fn update(
                     );
                     return Some(formatter(format, &data));
                 }
-                Err(_e) => return None,
+                Err(_e) => return Some("[error]".to_string()),
             },
-            Err(_e) => return None,
+            Err(_e) => return Some("[offline]".to_string()),
         },
         Err(_e) => return None,
     }
@@ -231,6 +235,7 @@ fn icon(icon_id: &str) -> &str {
     return icons.get(icon_id).unwrap_or(&"🚫");
 }
 
+// format weather from given data into string
 fn formatter(format: &str, data: &HashMap<&str, String>) -> String {
     let mut result = format.to_string();
     for (k, v) in data {

@@ -12,7 +12,7 @@ use text_io::read;
 
 mod weather;
 
-// get arguments form application
+// get arguments from application
 fn get_args() -> ArgMatches {
     App::new("i3owm")
     .version(crate_version!())
@@ -115,7 +115,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     println!("{}", line);
     let line: String = read!("{}\n");
     println!("{}", line);
-    // remeber newest weather update amd begin with offline message
+    // remeber newest weather update and begin with offline message
     let mut current = "[offline]".to_string();
     loop {
         let mut line: String = read!("{}\n");
@@ -137,7 +137,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     }
 }
 
-// insert
+// insert  new named i3status item into json string at position from left or right (reverse)
 fn insert(
     line: &str,
     name: &str,
@@ -174,6 +174,7 @@ fn insert(
     return Ok(format_json(format!("{:?}", items)));
 }
 
+// preprocess output so that i3bar will eat it
 fn format_json(line: String) -> String {
     // FIXIT: all the following replacements are needed because I just can not deal
     // with serde_json the right way :/ PLEASE HELP!
