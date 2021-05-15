@@ -5,10 +5,86 @@ extern crate serde_json;
 
 use chrono::prelude::*;
 use http::StatusCode;
-use serde_json::Value;
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::mpsc;
 use std::{result, thread, time};
+
+#[derive(Deserialize, Debug)]
+pub struct Coord {
+    pub lon: f64,
+    pub lat: f64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Weather {
+    pub id: u64,
+    pub main: String,
+    pub description: String,
+    pub icon: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Main {
+    pub temp: f64,
+    pub feels_like: f64,
+    pub pressure: f64,
+    pub humidity: f64,
+    pub temp_min: f64,
+    pub temp_max: f64,
+    pub sea_level: Option<f64>,
+    pub grnd_level: Option<f64>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Wind {
+    pub speed: f64,
+    pub deg: u64,
+    pub gust: Option<f64>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Clouds {
+    pub all: u64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Volume {
+    #[serde(rename = "1h")]
+    pub h1: u64,
+    #[serde(rename = "3h")]
+    pub h3: u64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Sys {
+    #[serde(rename = "type")]
+    pub type_: u64,
+    pub id: u64,
+    pub message: Option<f64>,
+    pub country: String,
+    pub sunrise: u64,
+    pub sunset: u64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CurrentWeather {
+    pub coord: Coord,
+    pub weather: Vec<Weather>,
+    pub base: String,
+    pub main: Main,
+    pub visibility: u64,
+    pub wind: Wind,
+    pub clouds: Clouds,
+    pub rain: Option<Volume>,
+    pub snow: Option<Volume>,
+    pub dt: u64,
+    pub sys: Sys,
+    pub timezone: i64,
+    pub id: u64,
+    pub name: String,
+    pub cod: u64,
+}
 
 // get list of the weather properties as text table
 pub fn help() -> &'static str {
@@ -49,12 +125,12 @@ pub fn help() -> &'static str {
     ";
 }
 
-// type of update receiver channel whic you get from init
-type Receiver = mpsc::Receiver<result::Result<String, String>>;
+// owm accessor
+pub struct Owm<'a>(Receiver, Converter<'a>);
 
 // start weather fetching which will spawn a thread that signals updates from OWM in json format
 // via the returned receiver
-pub fn receiver(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver {
+pub fn init<'a>(city: &str, units: &'a str, lang: &str, api_key: &str) -> Owm<'a> {
     // generate correct request URL depending on city is id or name
     let url = match city.parse::<u64>().is_ok() {
         true => format!(
@@ -86,125 +162,102 @@ pub fn receiver(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver 
         }
     });
     // return receiver that provides the updated weather as json string
-    return rx;
+    return Owm(rx, converter(units));
 }
 
-type Converter<'a> = HashMap<&'a str, Box<dyn Fn(&Value) -> String>>;
+type Converter<'a> = HashMap<&'a str, Box<dyn Fn(&CurrentWeather) -> String>>;
+type Receiver = mpsc::Receiver<result::Result<String, String>>;
 
-fn deg(v: &Value) -> f64 {
-    v["wind"]["deg"].as_f64().unwrap().round()
+fn deg(c: &CurrentWeather) -> u64 {
+    c.wind.deg
 }
-fn dir(v: &Value) -> usize {
-    (deg(v).round() as usize % 360) / 45
+fn dir(v: &CurrentWeather) -> usize {
+    (deg(v) as usize % 360) / 45
 }
 
 // create a hash map of weather fetch closures by key
-pub fn converter(units: &str) -> Converter {
+fn converter(units: &str) -> Converter {
     let mut data: Converter = HashMap::new();
     data.insert(
         "{update}",
-        Box::new(|_v| Local::now().format("%H:%M").to_string()),
+        Box::new(|_c| Local::now().format("%H:%M").to_string()),
     );
-    data.insert("{city}", Box::new(|v| v["name"].to_string()));
-    data.insert("{main}", Box::new(|v| v["weather"][0]["main"].to_string()));
+    data.insert("{city}", Box::new(|c| c.name.to_string()));
+    data.insert("{main}", Box::new(|c| c.weather[0].main.to_string()));
     data.insert(
         "{description}",
-        Box::new(|v| v["weather"][0]["description"].to_string()),
+        Box::new(|c| c.weather[0].description.to_string()),
     );
-    data.insert(
-        "{icon}",
-        Box::new(|v| icon(v["weather"][0]["icon"].as_str().unwrap()).to_string()),
-    );
-    data.insert(
-        "{pressure}",
-        Box::new(|v| v["main"]["pressure"].to_string()),
-    );
-    data.insert(
-        "{humidity}",
-        Box::new(|v| v["main"]["humidity"].to_string()),
-    );
-    data.insert("{wind}", Box::new(|v| v["wind"]["deg"].to_string()));
-    data.insert("{wind_deg}", Box::new(move |v| deg(v).to_string()));
+    data.insert("{icon}", Box::new(|c| icon(&c.weather[0].icon)));
+    data.insert("{pressure}", Box::new(|c| c.main.pressure.to_string()));
+    data.insert("{humidity}", Box::new(|c| c.main.humidity.to_string()));
+    data.insert("{wind}", Box::new(|c| c.wind.deg.to_string()));
+    data.insert("{wind_deg}", Box::new(|c| deg(c).to_string()));
     data.insert(
         "{wind}",
-        Box::new(|v| {
+        Box::new(|c| {
             let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
-            directions[dir(v)].to_string()
+            directions[dir(c)].to_string()
         }),
     );
     data.insert(
         "{wind_icon}",
-        Box::new(move |v| {
+        Box::new(|c| {
             let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-            icons[dir(v)].to_string()
+            icons[dir(c)].to_string()
         }),
     );
-    data.insert("{deg_unit}", Box::new(|_v| "°".to_string()));
+    data.insert("{deg_unit}", Box::new(|_c| "°".to_string()));
     data.insert(
         "{wind_speed}",
-        Box::new(|v| v["wind"]["speed"].as_f64().unwrap().round().to_string()),
+        Box::new(|c| c.wind.speed.round().to_string()),
     );
-    data.insert("{visibility}", Box::new(|v| v["visibility"].to_string()));
+    data.insert("{visibility}", Box::new(|c| c.visibility.to_string()));
     data.insert(
         "{visibility_km}",
-        Box::new(|v| (v["visibility"].as_i64().unwrap() / 1000).to_string()),
+        Box::new(|c| (c.visibility / 1000).to_string()),
     );
     data.insert(
         "{rain.1h}",
-        Box::new(|v| {
-            match v["rain"]["rain.1h"].as_i64() {
-                Some(v) => v,
-                None => 0i64,
-            }
-            .to_string()
+        Box::new(|c| match &c.rain {
+            Some(r) => r.h1.to_string(),
+            None => "-".to_string(),
         }),
     );
     data.insert(
         "{rain.3h}",
-        Box::new(|v| {
-            match v["rain"]["rain.3h"].as_i64() {
-                Some(v) => v,
-                None => 0i64,
-            }
-            .to_string()
+        Box::new(|c| match &c.rain {
+            Some(r) => r.h3.to_string(),
+            None => "-".to_string(),
         }),
     );
     data.insert(
         "{snow.1h}",
-        Box::new(|v| {
-            match v["snow"]["snow.1h"].as_i64() {
-                Some(v) => v,
-                None => 0i64,
-            }
-            .to_string()
+        Box::new(|c| match &c.snow {
+            Some(r) => r.h1.to_string(),
+            None => "-".to_string(),
         }),
     );
     data.insert(
         "{snow.3h}",
-        Box::new(|v| {
-            match v["snow"]["snow.3h"].as_i64() {
-                Some(v) => v,
-                None => 0i64,
-            }
-            .to_string()
+        Box::new(|c| match &c.snow {
+            Some(r) => r.h3.to_string(),
+            None => "-".to_string(),
         }),
     );
     data.insert(
         "{temp_min}",
-        Box::new(|v| v["main"]["temp_min"].as_f64().unwrap().round().to_string()),
+        Box::new(|c| c.main.temp_min.round().to_string()),
     );
     data.insert(
         "{temp_max}",
-        Box::new(|v| v["main"]["temp_max"].as_f64().unwrap().round().to_string()),
+        Box::new(|c| c.main.temp_max.round().to_string()),
     );
     data.insert(
         "{feels_like}",
-        Box::new(|v| v["main"]["temp"].as_f64().unwrap().round().to_string()),
+        Box::new(|c| c.main.temp.round().to_string()),
     );
-    data.insert(
-        "{temp}",
-        Box::new(|v| v["main"]["temp"].as_f64().unwrap().round().to_string()),
-    );
+    data.insert("{temp}", Box::new(|c| c.main.temp.round().to_string()));
     data.insert(
         "{temp_unit}",
         Box::new(match units {
@@ -227,14 +280,14 @@ pub fn converter(units: &str) -> Converter {
 }
 
 // get some weather update or None (if there is nothing new)
-pub fn update(format: &str, rx: &Receiver, converter: &Converter) -> Option<String> {
-    match rx.try_recv() {
+pub fn update(format: &str, owm: &Owm) -> Option<String> {
+    match owm.0.try_recv() {
         Ok(response) => match response {
             Ok(json) => match serde_json::from_str(&json) {
                 Ok(w) => {
-                    return Some(formatter(format, w, converter));
+                    return Some(formatter(format, w, &owm.1));
                 }
-                Err(_e) => return Some("[error]".to_string()),
+                Err(e) => return Some(e.to_string()),
             },
             Err(e) => return Some(e),
         },
@@ -243,7 +296,7 @@ pub fn update(format: &str, rx: &Receiver, converter: &Converter) -> Option<Stri
 }
 
 // get a unicode symbol that matches the OWM icon
-fn icon(icon_id: &str) -> &str {
+fn icon(icon_id: &str) -> String {
     let icons: HashMap<&str, &str> = [
         ("01d", "🌞"),
         ("01n", "🌛"),
@@ -267,13 +320,13 @@ fn icon(icon_id: &str) -> &str {
     .iter()
     .cloned()
     .collect();
-    return icons.get(icon_id).unwrap_or(&"🚫");
+    return icons.get(&icon_id).unwrap_or(&"🚫").to_string();
 }
 
 // format weather from given data into string
-fn formatter(format: &str, w: Value, data: &Converter) -> String {
+fn formatter(format: &str, w: CurrentWeather, converter: &Converter) -> String {
     let mut result = format.to_string();
-    for (k, v) in data {
+    for (k, v) in converter {
         result = result.replace(k, &v(&w));
     }
     return result;
