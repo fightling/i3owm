@@ -195,9 +195,9 @@ pub fn update(
                     );
                     return Some(formatter(format, &data));
                 }
-                Err(_e) => return None,
+                Err(_e) => return Some("[error]".to_string()),
             },
-            Err(_e) => return None,
+            Err(_e) => return Some("[offline]".to_string()),
         },
         Err(_e) => return None,
     }
