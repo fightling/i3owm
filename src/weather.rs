@@ -91,6 +91,13 @@ pub fn receiver(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver 
 
 type Converter<'a> = HashMap<&'a str, Box<dyn Fn(&Value) -> String>>;
 
+fn deg(v: &Value) -> f64 {
+    v["wind"]["deg"].as_f64().unwrap().round()
+}
+fn dir(v: &Value) -> usize {
+    (deg(v).round() as usize % 360) / 45
+}
+
 // create a hash map of weather fetch closures by key
 pub fn converter(units: &str) -> Converter {
     let mut data: Converter = HashMap::new();
@@ -117,15 +124,20 @@ pub fn converter(units: &str) -> Converter {
         Box::new(|v| v["main"]["humidity"].to_string()),
     );
     data.insert("{wind}", Box::new(|v| v["wind"]["deg"].to_string()));
-    let direction_icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-    let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
-    let deg = move |v: &Value| v["wind"]["deg"].as_f64().unwrap();
-    let dir = move |v: &Value| (deg(v) / 45.0).round() as usize % 8;
-    data.insert("{wind_deg}", Box::new(move |v| deg(v).round().to_string()));
-    data.insert("{wind}", Box::new(move |v| directions[dir(v)].to_string()));
+    data.insert("{wind_deg}", Box::new(move |v| deg(v).to_string()));
+    data.insert(
+        "{wind}",
+        Box::new(|v| {
+            let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+            directions[dir(v)].to_string()
+        }),
+    );
     data.insert(
         "{wind_icon}",
-        Box::new(move |v| direction_icons[dir(v)].to_string()),
+        Box::new(move |v| {
+            let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+            icons[dir(v)].to_string()
+        }),
     );
     data.insert("{deg_unit}", Box::new(|_v| "°".to_string()));
     data.insert(
@@ -215,11 +227,7 @@ pub fn converter(units: &str) -> Converter {
 }
 
 // get some weather update or None (if there is nothing new)
-pub fn update(
-    format: &str,
-    rx: &Receiver,
-    converter: &Converter,
-) -> Option<String> {
+pub fn update(format: &str, rx: &Receiver, converter: &Converter) -> Option<String> {
     match rx.try_recv() {
         Ok(response) => match response {
             Ok(json) => match serde_json::from_str(&json) {
@@ -263,11 +271,7 @@ fn icon(icon_id: &str) -> &str {
 }
 
 // format weather from given data into string
-fn formatter(
-    format: &str,
-    w: Value,
-    data: &Converter,
-) -> String {
+fn formatter(format: &str, w: Value, data: &Converter) -> String {
     let mut result = format.to_string();
     for (k, v) in data {
         result = result.replace(k, &v(&w));
