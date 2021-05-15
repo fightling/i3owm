@@ -50,11 +50,11 @@ pub fn help() -> &'static str {
 }
 
 // type of update receiver channel whic you get from init
-pub type Receiver = mpsc::Receiver<result::Result<String, String>>;
+type Receiver = mpsc::Receiver<result::Result<String, String>>;
 
 // start weather fetching which will spawn a thread that signals updates from OWM in json format
 // via the returned receiver
-pub fn init(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver {
+pub fn receiver(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver {
     // generate correct request URL depending on city is id or name
     let url = match city.parse::<u64>().is_ok() {
         true => format!(
@@ -89,8 +89,11 @@ pub fn init(city: &str, units: &str, lang: &str, api_key: &str) -> Receiver {
     return rx;
 }
 
-pub fn converter(units: &str) -> HashMap<&str, Box<dyn Fn(&Value) -> String>> {
-    let mut data: HashMap<&str, Box<dyn Fn(&Value) -> String>> = HashMap::new();
+type Converter<'a> = HashMap<&'a str, Box<dyn Fn(&Value) -> String>>;
+
+// create a hash map of weather fetch closures by key
+pub fn converter(units: &str) -> Converter {
+    let mut data: Converter = HashMap::new();
     data.insert(
         "{update}",
         Box::new(|_v| Local::now().format("%H:%M").to_string()),
@@ -214,14 +217,14 @@ pub fn converter(units: &str) -> HashMap<&str, Box<dyn Fn(&Value) -> String>> {
 // get some weather update or None (if there is nothing new)
 pub fn update(
     format: &str,
-    rx: &mpsc::Receiver<result::Result<String, String>>,
-    convert: &HashMap<&str, Box<dyn Fn(&Value) -> String>>,
+    rx: &Receiver,
+    converter: &Converter,
 ) -> Option<String> {
     match rx.try_recv() {
         Ok(response) => match response {
             Ok(json) => match serde_json::from_str(&json) {
                 Ok(w) => {
-                    return Some(formatter(format, w, convert));
+                    return Some(formatter(format, w, converter));
                 }
                 Err(_e) => return Some("[error]".to_string()),
             },
@@ -263,7 +266,7 @@ fn icon(icon_id: &str) -> &str {
 fn formatter(
     format: &str,
     w: Value,
-    data: &HashMap<&str, Box<dyn Fn(&Value) -> String>>,
+    data: &Converter,
 ) -> String {
     let mut result = format.to_string();
     for (k, v) in data {
