@@ -12,7 +12,7 @@ use text_io::read;
 
 mod weather;
 
-// get arguments form application
+// get arguments from application
 fn get_args() -> ArgMatches {
     App::new("i3owm")
     .version(crate_version!())
@@ -115,7 +115,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     println!("{}", line);
     let line: String = read!("{}\n");
     println!("{}", line);
-    // remeber newest weather update amd begin with offline message
+    // remeber newest weather update and begin with offline message
     let mut current = "[offline]".to_string();
     loop {
         let mut line: String = read!("{}\n");
