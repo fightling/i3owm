@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         // update current weather info if there is an update available
         match weather::update(receiver) {
             Some(response) => match response {
-                Ok(w) => current = converter(format, &w, units),
+                Ok(w) => current = make_string(format, &w, units),
                 Err(e) => current = e,
             },
             None => (),
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 }
 
 // create a hash map of weather fetch closures by key
-fn converter(format: &str, current: &weather::CurrentWeather, units: &str) -> String {
+fn make_string(format: &str, current: &weather::CurrentWeather, units: &str) -> String {
     fn dir(current: &weather::CurrentWeather) -> usize {
         (current.wind.deg as usize % 360) / 45
     }
