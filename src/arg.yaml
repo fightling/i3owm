@@ -1,0 +1,96 @@
+name:                            i3owm
+about:                           Open Weather extension for i3status
+after_long_help:                 |
+        EXAMPLE:
+            Within your i3 configutation file just pipe the i3status output to i3owm like in the
+            following example (you will have top replace <key> with your API key to make it work):
+
+            bar {
+              status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit}'
+            }
+
+            Example output: ⛅ 11°C
+args:
+    - apikey:
+        short:                   k
+        long:                    apikey
+        about:                   OpenWeatherMap API key (see at https://openweathermap.org/api)
+        takes_value:             true
+    - city:
+        short:                   c
+        long:                    city
+        about:                   location city
+        long_about:              city's name, comma, 2-letter country code (ISO3166)
+        takes_value:             true
+        required_unless_present: id
+        conflicts_with:          id
+        default_value:           Berlin,DE
+    - id:
+        short:                   i
+        long:                    id
+        about:                   location city ID (see https://openweathermap.org/find)
+        takes_value:             true
+        required_unless_present: city
+        conflicts_with:          city
+    - format:
+        short:                   f
+        long:                    format
+        about:                   format string
+        default_value:           "{city} {icon} {temp}{temp_unit}"
+        takes_value:             true
+        long_about:              |
+            format string including one ore more of the following keys
+            {city}          City name
+            {main}          Group of weather parameters (Rain, Snow, Extreme
+                            etc.)
+            {description}   Weather condition within the group
+            {icon}          Weather icon
+            {pressure}      Atmospheric pressure (on the sea level, if there is
+                            no sea_level or grnd_level data), hPa
+            {humidity}      Humidity, %
+            {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
+            {wind_icon}     Wind direction as arrow icon
+            {wind_speed}    Wind speed, {speed_unit}
+            {wind_deg}      Wind direction, degrees (meteorological)
+            {deg_unit}      Direction unit (degrees: °)
+            {visibility}    Visibility, meter
+            {visibility_km} Visibility, kilometer
+            {rain.1h}       Rain volume for the last 1 hour, mm
+            {rain.3h}       Rain volume for the last 3 hours, mm
+            {snow.1h}       Snow volume for the last 1 hour, mm
+            {snow.3h}       Snow volume for the last 3 hours, mm
+            {temp_min}      Minimum temperature at the moment. This is minimal currently observed
+                            temperature (within large megalopolises and urban areas), {temp_unit}
+            {temp_max}      Maximum temperature at the moment. This is maximal
+                            currently observed temperature (within large
+                            megalopolises and urban areas), {temp_unit}
+            {feels_like}    Temperature. This temperature parameter accounts
+                            for the human perception of weather, {temp_unit}
+            {temp}          Temperature, {temp_unit}
+            {temp_unit}     Temperature
+                            (standard=K, metric=°C, imperial=°F)
+            {speed_unit}    Wind speed unit
+                            (standard=m/s, metric=m/s, imperial=mi/h)
+            {update}        Local time of last update, HH:MM
+    - position:
+        long:                    position
+        short:                   p
+        about:                   position of output in JSON when wrapping i3status
+        takes_value:             true
+    - lang:
+        short:                   l
+        long:                    lang
+        about:                   two character language code of weather descriptions
+        default_value:           en
+        takes_value:             true
+    - reverse:
+        short:                   r
+        long:                    reverse
+        about:                   reverse position (from right)
+    - units:
+        short:                   u
+        long:                    units
+        about:                   use imperial units
+        takes_value:             true
+        possible_values:         [ metric, imperial, standard ]
+        default_value:           metric
