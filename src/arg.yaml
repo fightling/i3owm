@@ -98,5 +98,5 @@ args:
         short:                   P
         long:                    poll
         about:                   duration of polling period in minutes
-        default_value:           10
+        default_value:           "10"
         takes_value:             true

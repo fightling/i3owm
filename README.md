@@ -98,6 +98,9 @@ OPTIONS:
     -l, --lang <lang>
             two character language code of weather descriptions [default: en]
 
+    -P, --poll <poll>
+            duration of polling period in minutes [default: 10]
+
     -p, --position <position>
             position of output in JSON when wrapping i3status
 
