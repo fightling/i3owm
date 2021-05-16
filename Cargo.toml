@@ -1,6 +1,6 @@
 [package]
 name = "i3owm"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["Patrick Hoffmann fightling@elektropost.org>"]
 edition = "2018"
 description = "Open Weather extension for i3status"
@@ -16,4 +16,4 @@ keywords = ["weather", "i3wm", "i3status" ]
 clap = { version = "3.0.0-beta.2", features = ["yaml"] }
 chrono = "0.4.7"
 i3status_ext = "0.0.4"
-openweathermap = "0.0.3"
+openweathermap = "0.0.4"
