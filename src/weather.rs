@@ -37,13 +37,13 @@ pub struct Main {
 #[derive(Deserialize, Debug)]
 pub struct Wind {
     pub speed: f64,
-    pub deg: u64,
+    pub deg: f64,
     pub gust: Option<f64>,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Clouds {
-    pub all: u64,
+    pub all: f64,
 }
 
 #[derive(Deserialize, Debug)]
