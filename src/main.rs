@@ -1,15 +1,11 @@
 extern crate chrono;
-extern crate regex;
-extern crate reqwest;
-extern crate serde;
+extern crate i3status_ext;
+extern crate openweathermap;
 
 use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
 use std::collections::HashMap;
 use std::error;
-
-mod i3status;
-mod weather;
 
 // continuously inject weather into incoming json lines from i3status and pass through
 fn main() -> Result<(), Box<dyn error::Error>> {
@@ -31,13 +27,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .unwrap();
     let reverse = args.is_present("reverse");
     // start our observatory via OWM
-    let receiver = &weather::init(city, units, lang, apikey);
-    i3status::begin();
+    let receiver = &openweathermap::init(city, units, lang, apikey);
+    i3status_ext::begin();
     // remeber newest weather update and begin with offline message
     let mut current = String::new();
     loop {
         // update current weather info if there is an update available
-        match weather::update(receiver) {
+        match openweathermap::update(receiver) {
             Some(response) => match response {
                 Ok(w) => current = make_string(format, &w, units),
                 Err(e) => current = e,
@@ -45,13 +41,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             None => (),
         }
         // insert current weather info and print json string or original line
-        i3status::update("weather", position, reverse, &current);
+        i3status_ext::update("weather", position, reverse, &current);
     }
 }
 
 // create a hash map of weather fetch closures by key
-fn make_string(format: &str, current: &weather::CurrentWeather, units: &str) -> String {
-    fn dir(current: &weather::CurrentWeather) -> usize {
+fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &str) -> String {
+    fn dir(current: &openweathermap::CurrentWeather) -> usize {
         (current.wind.deg as usize % 360) / 45
     }
     // get a unicode symbol that matches the OWM icon
