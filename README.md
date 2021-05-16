@@ -31,8 +31,8 @@ cargo install i3owm
 ## Options
 
 ```
-i3owm 0.1.5
 ▶ i3owm --help
+i3owm 0.1.6
 Open Weather extension for i3status
 
 USAGE:
