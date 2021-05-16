@@ -5,10 +5,9 @@ extern crate openweathermap;
 use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
 use std::collections::HashMap;
-use std::error;
 
 // continuously inject weather into incoming json lines from i3status and pass through
-fn main() -> Result<(), Box<dyn error::Error>> {
+fn main() {
     // fetch arguments
     let yaml = load_yaml!("arg.yaml");
     let args = App::from(yaml).version(crate_version!()).get_matches();
@@ -24,7 +23,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .value_of("position")
         .unwrap_or("0")
         .parse::<usize>()
-        .unwrap();
+        .unwrap_or(0);
     let reverse = args.is_present("reverse");
     // start our observatory via OWM
     let receiver = &openweathermap::init(city, units, lang, apikey);
