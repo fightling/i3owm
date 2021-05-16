@@ -76,7 +76,7 @@ pub struct CurrentWeather {
     pub clouds: Clouds,
     pub rain: Option<Volume>,
     pub snow: Option<Volume>,
-    pub dt: u64,
+    pub dt: i64,
     pub sys: Sys,
     pub timezone: i64,
     pub id: u64,

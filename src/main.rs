@@ -81,8 +81,9 @@ fn make_string(format: &str, current: &weather::CurrentWeather, units: &str) -> 
         .collect();
         return icons.get(&icon_id).unwrap_or(&"🚫");
     }
+    let update : DateTime::<Local> = DateTime::from(Utc.timestamp(current.dt,0));
     format
-        .replace("{update}", &Local::now().format("%H:%M").to_string())
+        .replace("{update}", &update.format("%H:%M").to_string())
         .replace("{city}", current.name.as_str())
         .replace("{main}", current.weather[0].main.as_str())
         .replace("{description}", current.weather[0].description.as_str())
