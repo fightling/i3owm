@@ -2,15 +2,14 @@ extern crate chrono;
 extern crate regex;
 extern crate reqwest;
 extern crate serde;
-extern crate serde_json;
 
+use chrono::prelude::*;
 use clap::{crate_version, App, Arg, ArgMatches};
-use regex::Regex;
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::error;
-use text_io::read;
 
 mod weather;
+mod i3status;
 
 // get arguments from application
 fn get_args() -> ArgMatches {
@@ -58,7 +57,41 @@ Output would be like:
             .conflicts_with("city"),
         Arg::new("format")
             .about("format string")
-            .long_about( weather::help() )
+            .long_about(  "available keys are:
+    {city}          City name
+    {main}          Group of weather parameters (Rain, Snow, Extreme
+    etcurrent.)
+    {description}   Weather condition within the group
+    {icon}          Weather icon
+    {pressure}      Atmospheric pressure (on the sea level, if there is
+    no sea_level or grnd_level data), hPa
+    {humidity}      Humidity, %
+    {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
+    {wind_icon}     Wind direction as arrow icon
+    {wind_speed}    Wind speed, {speed_unit}
+    {wind_deg}      Wind direction, degrees (meteorological)
+    {deg_unit}      Direction unit (degrees: °)
+    {visibility}    Visibility, meter
+    {visibility_km} Visibility, kilometer
+    {rain.1h}       Rain volume for the last 1 hour, mm
+    {rain.3h}       Rain volume for the last 3 hours, mm
+    {snow.1h}       Snow volume for the last 1 hour, mm
+    {snow.3h}       Snow volume for the last 3 hours, mm
+    {temp_min}      Minimum temperature at the moment. This is minimal
+    currently observed temperature (within large
+    megalopolises and urban areas), {temp_unit}
+    {temp_max}      Maximum temperature at the moment. This is maximal
+    currently observed temperature (within large
+    megalopolises and urban areas), {temp_unit}
+    {feels_like}    Temperature. This temperature parameter accounts
+    for the human perception of weather, {temp_unit}
+    {temp}          Temperature, {temp_unit}
+    {temp_unit}     Temperature
+    (standard=K, metric=°C, imperial=°F)
+    {speed_unit}    Wind speed unit
+    (standard=m/s, metric=m/s, imperial=mi/h
+    {update}        Local time of last update, HH:MM
+    ")
             .short('f')
             .long("format")
             .default_value("{city} {icon} {current} {temp}{temp_unit} {humidity}%")
@@ -108,93 +141,130 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .unwrap();
     let reverse = args.is_present("reverse");
     // start our observatory via OWM
-    let owm = weather::init(city, units, lang, apikey);
-    // read first two lines and ignore them
-    // TODO: this code stinks!
-    let line: String = read!("{}\n");
-    println!("{}", line);
-    let line: String = read!("{}\n");
-    println!("{}", line);
+    let receiver = &weather::init(city, units, lang, apikey);
+    i3status::begin();
     // remeber newest weather update and begin with offline message
     let mut current = String::new();
     loop {
-        let mut line: String = read!("{}\n");
-        // handle prefix comma
-        if line.chars().next().unwrap() == ',' {
-            line.remove(0);
-            print!(",")
-        }
+        let status = i3status::read();
         // update current weather info if there is an update available
-        match weather::update(format, &owm) {
-            Some(update) => current = update,
-            _ => (),
+        match weather::update(receiver) {
+            Some(response) => match response {
+                Ok(w) => current = converter(format, &w, units),
+                Err(e) => current = e,
+            },
+            None => (),
         }
         // insert current weather info and print json string or original line
-        match insert(&line, "weather", position, reverse, &current) {
-            Ok(new) => println!("{}", new),
-            _ => println!("{}", line),
-        }
+        i3status::write(&status, "weather", position, reverse, &current);
     }
 }
 
-// insert  new named i3status item into json string at position from left or right (reverse)
-fn insert(
-    line: &str,
-    name: &str,
-    position: usize,
-    reverse: bool,
-    what: &str,
-) -> Result<String, serde_json::Error> {
-    //  i3status json entry in a struct
-    #[derive(Serialize, Deserialize, Debug)]
-    struct I3StatusItem {
-        name: String,
-        instance: Option<String>,
-        markup: String,
-        color: Option<String>,
-        full_text: String,
-    }
-    // read all incoming entries
-    let mut items: Vec<I3StatusItem> = serde_json::from_str(&line)?;
-    // insert this one
-    let w: I3StatusItem = I3StatusItem {
-        full_text: what.to_string(),
-        markup: "none".to_string(),
-        name: name.to_string(),
-        instance: None,
-        color: None,
-    };
-    // insert at given position
-    if reverse {
-        items.insert(items.len() - 1 - position, w);
-    } else {
-        items.insert(position, w);
-    }
-    // format output back up json string
-    return Ok(format_json(format!("{:?}", items)));
+fn dir(current: &weather::CurrentWeather) -> usize {
+    (current.wind.deg as usize % 360) / 45
 }
 
-// preprocess output so that i3bar will eat it
-fn format_json(line: String) -> String {
-    // FIXIT: all the following replacements are needed because I just can not deal
-    // with serde_json the right way :/ PLEASE HELP!
-    let mut line = line;
+// create a hash map of weather fetch closures by key
+fn converter(format: &str, current: &weather::CurrentWeather, units: &str) -> String {
+    format
+        .replace("{update}", &Local::now().format("%H:%M").to_string())
+        .replace("{city}", current.name.as_str())
+        .replace("{main}", current.weather[0].main.as_str())
+        .replace("{description}", current.weather[0].description.as_str())
+        .replace("{icon}", icon(&current.weather[0].icon))
+        .replace("{pressure}", &current.main.pressure.to_string())
+        .replace("{humidity}", &current.main.humidity.to_string())
+        .replace("{wind}", &current.wind.deg.to_string())
+        .replace("{wind_deg}", &current.wind.deg.to_string())
+        .replace("{wind}", {
+            let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+            directions[dir(current)]
+        })
+        .replace("{wind_icon}", {
+            let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+            icons[dir(current)]
+        })
+        .replace("{deg_unit}", "°")
+        .replace("{wind_speed}", &current.wind.speed.round().to_string())
+        .replace("{visibility}", &current.visibility.to_string())
+        .replace("{visibility_km}", &(current.visibility / 1000).to_string())
+        .replace(
+            "{rain.1h}",
+            &match &current.rain {
+                Some(r) => r.h1.to_string(),
+                None => "-".to_string(),
+            }
+            .to_string(),
+        )
+        .replace(
+            "{rain.3h}",
+            &match &current.rain {
+                Some(r) => r.h3.to_string(),
+                None => "-".to_string(),
+            },
+        )
+        .replace(
+            "{snow.1h}",
+            &match &current.snow {
+                Some(r) => r.h1.to_string(),
+                None => "-".to_string(),
+            },
+        )
+        .replace(
+            "{snow.3h}",
+            &match &current.snow {
+                Some(r) => r.h3.to_string(),
+                None => "-".to_string(),
+            },
+        )
+        .replace("{temp_min}", &current.main.temp_min.round().to_string())
+        .replace("{temp_max}", &current.main.temp_max.round().to_string())
+        .replace("{feels_like}", &current.main.temp.round().to_string())
+        .replace("{temp}", &current.main.temp.round().to_string())
+        .replace(
+            "{temp_unit}",
+            match units {
+                "standard" => "K",
+                "metric" => "°C",
+                "imperial" => "°F",
+                _ => "",
+            },
+        )
+        .replace(
+            "{speed_unit}",
+            match units {
+                "standard" => "m/s",
+                "metric" => "m/s",
+                "imperial" => "mi/h",
+                _ => "",
+            },
+        )
+}
 
-    // remove all the 'Item' names
-    // thought about using '#[serde(rename = "name")]' but could not make it work
-    line = line.replace("I3StatusItem", "");
-    // remove optional values which are 'None'
-    // tried '#[serde(skip_serializing_if = "Option::is_none")]' but did not work.
-    line = line.replace(", color: None", "");
-    line = line.replace(", instance: None", "");
-    // add quotations arround json names. can you setup serge_json doing that?
-    line = line.replace("full_text", "\"full_text\"");
-    line = line.replace("instance", "\"instance\"");
-    line = line.replace("color", "\"color\"");
-    line = line.replace("markup", "\"markup\"");
-    line = line.replace("name", "\"name\"");
-    // remove the 'Some()' envelop from all optional values
-    let re = Regex::new(r"Some\((?P<v>[^\)]*)\)").unwrap();
-
-    return re.replace_all(&line, "$v").to_owned().to_string();
+// get a unicode symbol that matches the OWM icon
+fn icon(icon_id: &str) -> &str {
+    let icons: HashMap<&str, &str> = [
+        ("01d", "🌞"),
+        ("01n", "🌛"),
+        ("02d", "🌤"),
+        ("02n", "🌤"),
+        ("03d", "⛅"),
+        ("03n", "⛅"),
+        ("04d", "⛅"),
+        ("04n", "⛅"),
+        ("09d", "🌧"),
+        ("09n", "🌧"),
+        ("10d", "🌦"),
+        ("10n", "🌦"),
+        ("11d", "🌩"),
+        ("11n", "🌩"),
+        ("13d", "❄"),
+        ("13n", "❄"),
+        ("50d", "🌫"),
+        ("50n", "🌫"),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+    return icons.get(&icon_id).unwrap_or(&"🚫");
 }
