@@ -25,8 +25,13 @@ fn main() {
         .parse::<usize>()
         .unwrap_or(0);
     let reverse = args.is_present("reverse");
+    let poll = args
+        .value_of("poll")
+        .unwrap_or("10")
+        .parse::<u64>()
+        .unwrap_or(10);
     // start our observatory via OWM
-    let receiver = &openweathermap::init(city, units, lang, apikey);
+    let receiver = &openweathermap::init(city, units, lang, apikey, poll);
     i3status_ext::begin();
     // remeber newest weather update and begin with offline message
     let mut current = String::new();
@@ -76,7 +81,7 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         .collect();
         return icons.get(&icon_id).unwrap_or(&"🚫");
     }
-    let update : DateTime::<Local> = DateTime::from(Utc.timestamp(current.dt,0));
+    let update: DateTime<Local> = DateTime::from(Utc.timestamp(current.dt, 0));
     format
         .replace("{update}", &update.format("%H:%M").to_string())
         .replace("{city}", current.name.as_str())

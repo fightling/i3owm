@@ -94,3 +94,9 @@ args:
         takes_value:             true
         possible_values:         [ metric, imperial, standard ]
         default_value:           metric
+    - poll:
+        short:                   P
+        long:                    poll
+        about:                   duration of polling period in minutes
+        default_value:           10
+        takes_value:             true
