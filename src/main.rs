@@ -12,9 +12,7 @@ fn main() {
     let yaml = load_yaml!("arg.yaml");
     let args = App::from(yaml).version(crate_version!()).get_matches();
     // convert arguments to rust variables
-    let city = args
-        .value_of("id")
-        .unwrap_or(args.value_of("city").unwrap());
+    let location = args.value_of("location").unwrap();
     let apikey = args.value_of("apikey").unwrap_or("");
     let units = args.value_of("units").unwrap();
     let format = args.value_of("format").unwrap();
@@ -31,7 +29,7 @@ fn main() {
         .parse::<u64>()
         .unwrap_or(10);
     // start our observatory via OWM
-    let receiver = &openweathermap::init(city, units, lang, apikey, poll);
+    let receiver = &openweathermap::init(location, units, lang, apikey, poll);
     i3status_ext::begin();
     // remeber newest weather update and begin with offline message
     let mut current = String::new();

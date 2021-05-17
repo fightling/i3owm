@@ -1,6 +1,6 @@
-name:                            i3owm
-about:                           Open Weather extension for i3status
-after_long_help:                 |
+name:                    i3owm
+about:                   Open Weather extension for i3status
+after_long_help:         |
         EXAMPLE:
             Within your i3 configutation file just pipe the i3status output to i3owm like in the
             following example (you will have top replace <key> with your API key to make it work):
@@ -12,33 +12,24 @@ after_long_help:                 |
             Example output: ⛅ 11°C
 args:
     - apikey:
-        short:                   k
-        long:                    apikey
-        about:                   OpenWeatherMap API key (see at https://openweathermap.org/api)
-        takes_value:             true
-    - city:
-        short:                   c
-        long:                    city
-        about:                   location city
-        long_about:              city's name, comma, 2-letter country code (ISO3166)
-        takes_value:             true
-        required_unless_present: id
-        conflicts_with:          id
-        default_value:           Berlin,DE
-    - id:
-        short:                   i
-        long:                    id
-        about:                   location city ID (see https://openweathermap.org/find)
-        takes_value:             true
-        required_unless_present: city
-        conflicts_with:          city
+        short:           k
+        long:            apikey
+        about:           OpenWeatherMap API key (see at https://openweathermap.org/api)
+        takes_value:     true
+    - location:
+        short:           c
+        long:            location
+        about:           location city name, city ID or coordinate
+        long_about:      city's name maybe followed by comma-separated 2-letter (state code for the USA locations and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or geographical coordinate as comma-separated latitude and longitude.
+        takes_value:     true
+        default_value:   Berlin,DE
     - format:
-        short:                   f
-        long:                    format
-        about:                   format string
-        default_value:           "{city} {icon} {temp}{temp_unit}"
-        takes_value:             true
-        long_about:              |
+        short:           f
+        long:            format
+        about:           format string
+        default_value:   "{city} {icon} {temp}{temp_unit}"
+        takes_value:     true
+        long_about:      |
             format string including one ore more of the following keys
             {city}          City name
             {main}          Group of weather parameters (Rain, Snow, Extreme
@@ -73,30 +64,30 @@ args:
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
     - position:
-        long:                    position
-        short:                   p
-        about:                   position of output in JSON when wrapping i3status
-        takes_value:             true
+        long:            position
+        short:           p
+        about:           position of output in JSON when wrapping i3status
+        takes_value:     true
     - lang:
-        short:                   l
-        long:                    lang
-        about:                   two character language code of weather descriptions
-        default_value:           en
-        takes_value:             true
+        short:           l
+        long:            lang
+        about:           two character language code of weather descriptions
+        default_value:   en
+        takes_value:     true
     - reverse:
-        short:                   r
-        long:                    reverse
-        about:                   reverse position (from right)
+        short:           r
+        long:            reverse
+        about:           reverse position (from right)
     - units:
-        short:                   u
-        long:                    units
-        about:                   use imperial units
-        takes_value:             true
-        possible_values:         [ metric, imperial, standard ]
-        default_value:           metric
+        short:           u
+        long:            units
+        about:           use imperial units
+        takes_value:     true
+        possible_values: [ metric, imperial, standard ]
+        default_value:   metric
     - poll:
-        short:                   P
-        long:                    poll
-        about:                   duration of polling period in minutes
-        default_value:           "10"
-        takes_value:             true
+        short:           P
+        long:            poll
+        about:           duration of polling period in minutes
+        default_value:   "10"
+        takes_value:     true
