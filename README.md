@@ -52,9 +52,6 @@ OPTIONS:
     -k, --apikey <apikey>
             OpenWeatherMap API key (see at https://openweathermap.org/api)
 
-    -c, --city <city>
-            city's name, comma, 2-letter country code (ISO3166) [default: Berlin,DE]
-
     -f, --format <format>
             format string including one ore more of the following keys
             {city}          City name
@@ -91,11 +88,13 @@ OPTIONS:
             {update}        Local time of last update, HH:MM
              [default: {city} {icon} {temp}{temp_unit}]
 
-    -i, --id <id>
-            location city ID (see https://openweathermap.org/find)
-
     -l, --lang <lang>
             two character language code of weather descriptions [default: en]
+
+    -c, --location <location>
+            city's name maybe followed by comma-separated 2-letter (state code for the USA locations
+            and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or
+            geographical coordinate as comma-separated latitude and longitude. [default: Berlin,DE]
 
     -P, --poll <poll>
             duration of polling period in minutes [default: 10]
