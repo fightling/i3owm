@@ -105,7 +105,7 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         .replace(
             "{rain.1h}",
             &match &current.rain {
-                Some(r) => r.h1.to_string(),
+                Some(r) => r.h1.unwrap_or(0.0).to_string(),
                 None => "-".to_string(),
             }
             .to_string(),
@@ -113,21 +113,21 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         .replace(
             "{rain.3h}",
             &match &current.rain {
-                Some(r) => r.h3.to_string(),
+                Some(r) => r.h3.unwrap_or(0.0).to_string(),
                 None => "-".to_string(),
             },
         )
         .replace(
             "{snow.1h}",
             &match &current.snow {
-                Some(r) => r.h1.to_string(),
+                Some(r) => r.h1.unwrap_or(0.0).to_string(),
                 None => "-".to_string(),
             },
         )
         .replace(
             "{snow.3h}",
             &match &current.snow {
-                Some(r) => r.h3.to_string(),
+                Some(r) => r.h3.unwrap_or(0.0).to_string(),
                 None => "-".to_string(),
             },
         )
