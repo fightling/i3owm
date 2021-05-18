@@ -6,6 +6,9 @@ use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
 use std::collections::HashMap;
 
+#[cfg(test)]
+mod tests;
+
 // continuously inject weather into incoming json lines from i3status and pass through
 fn main() {
     // fetch arguments
