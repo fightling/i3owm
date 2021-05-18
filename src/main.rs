@@ -37,7 +37,7 @@ fn main() {
         // update current weather info if there is an update available
         match openweathermap::update(receiver) {
             Some(response) => match response {
-                Ok(w) => current = make_string(format, &w, units),
+                Ok(w) => current = make_string(format, &w),
                 Err(e) => current = e,
             },
             None => (),
@@ -48,7 +48,7 @@ fn main() {
 }
 
 // create a hash map of weather fetch closures by key
-fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &str) -> String {
+fn make_string(format: &str, current: &openweathermap::CurrentWeather) -> String {
     fn dir(current: &openweathermap::CurrentWeather) -> usize {
         (current.wind.deg as usize % 360) / 45
     }
@@ -137,7 +137,7 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         .replace("{temp}", &current.main.temp.round().to_string())
         .replace(
             "{temp_unit}",
-            match units {
+            match current.units.as_ref() {
                 "standard" => "K",
                 "metric" => "°C",
                 "imperial" => "°F",
@@ -146,7 +146,7 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         )
         .replace(
             "{speed_unit}",
-            match units {
+            match current.units.as_ref() {
                 "standard" => "m/s",
                 "metric" => "m/s",
                 "imperial" => "mi/h",
