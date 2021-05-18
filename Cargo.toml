@@ -16,4 +16,4 @@ keywords = ["weather", "i3wm", "i3status" ]
 clap = { version = "3.0.0-beta.2", features = ["yaml"] }
 chrono = "0.4.7"
 i3status_ext = "0.0.4"
-openweathermap = "0.1.2"
+openweathermap = "0.1.3"

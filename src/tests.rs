@@ -6,7 +6,7 @@ const APIKEY: &str = "df8f453724ddbe2befa2d20f09b4a694";
 fn test_key(format: &str) {
     match openweathermap::blocking::weather("Berlin,DE", "metric", "en", APIKEY) {
         Ok(w) => {
-            let s = make_string(format, &w);
+            let s = make_string(format, &w, "metric");
             // check if all keys have been replaced
             assert!(s.find("{").is_none());
             assert!(s.find("}").is_none());
@@ -24,7 +24,7 @@ fn test_allkeys() {
     let format: String = std::str::from_utf8(format.as_slice()).unwrap().to_string();
     // cut out the example at the end because it contains `{` and `}` which are not marking any key names
     let format: &str = &format[0..format.find("EXAMPLE:").unwrap()];
-    
+
     test_key(&format);
 }
 
