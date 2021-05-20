@@ -33,7 +33,8 @@ fn main() {
         .unwrap_or(10);
     // start our observatory via OWM
     let receiver = &openweathermap::init(location, units, lang, apikey, poll);
-    i3status_ext::begin();
+
+    let mut io = i3status_ext::begin().unwrap();
     // remeber newest weather update and begin with offline message
     let mut current = String::new();
     loop {
@@ -46,7 +47,7 @@ fn main() {
             None => (),
         }
         // insert current weather info and print json string or original line
-        i3status_ext::update("weather", position, reverse, &current);
+        i3status_ext::update(&mut io, "weather", position, reverse, &current).unwrap();
     }
 }
 
