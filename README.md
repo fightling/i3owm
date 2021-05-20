@@ -1,4 +1,4 @@
-# I3owm
+# I3owm [![Rust](https://github.com/fightling/i3owm/actions/workflows/rust.yml/badge.svg)](https://github.com/fightling/i3owm/actions/workflows/rust.yml)
 
 rust implementation of Open Weather Map add-on for i3status
 
@@ -116,3 +116,26 @@ EXAMPLE:
 
     Example output: ⛅ 11°C
 ```
+
+
+## Reference Documentation
+
+Beside this introduction there is a reference documentation for the source code which can be found [here](https://docs.rs/i3owm).
+
+## Links
+
+### Website
+
+This README tastes better at [i3owm.thats-software.com](https://i3owm.thats-software.com).
+
+### *github* repository
+
+For the source code see [this repository](https://github.com/fightling/i3owm) at *github.com*.
+
+### on *crates.io*
+
+Published at [*crates.io*](https://crates.io/crates/i3owm).
+
+## License
+
+i3status_ext is licensed under the *MIT license* (LICENSE-MIT or http://opensource.org/licenses/MIT)
