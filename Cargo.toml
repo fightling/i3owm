@@ -7,7 +7,7 @@ description = "Open Weather extension for i3status"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 documentation = "https://docs.rs/i3owm"
-homepage = "https://i3owm.thats-software.com"
+homepage = "http://i3owm.thats-software.com"
 keywords = ["weather", "i3wm", "i3status" ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

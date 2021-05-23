@@ -126,7 +126,7 @@ Beside this introduction there is a reference documentation for the source code 
 
 ### Website
 
-This README tastes better at [i3owm.thats-software.com](https://i3owm.thats-software.com).
+This README tastes better at [i3owm.thats-software.com](http://i3owm.thats-software.com).
 
 ### *github* repository
 
