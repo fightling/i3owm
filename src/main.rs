@@ -64,7 +64,7 @@ fn main() {
                     // remember cloudiness for spotting visibility
                     cloudiness = w.clouds.all;
                     // check if we have to start open_notify thread
-                    if iss.is_none() {
+                    if iss.is_none() && format.contains("{iss_") {
                         iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 1));
                         // reset format string
                         format_str = format.to_string();
