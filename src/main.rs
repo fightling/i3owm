@@ -1,9 +1,11 @@
 extern crate chrono;
 extern crate i3status_ext;
+extern crate notify_rust;
 extern crate openweathermap;
 
 use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
+use notify_rust::{Notification,Urgency};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -41,6 +43,7 @@ fn main() {
         .unwrap_or("25")
         .parse::<u64>()
         .unwrap_or(25);
+    let notify = args.is_present("notify");
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
     let mut iss: Option<open_notify::Receiver> = None;
@@ -49,7 +52,10 @@ fn main() {
     let mut props: HashMap<&str, String> = HashMap::new();
     let mut current_spots: Vec<open_notify::Spot> = Vec::new();
     get_spots(&mut props, &Vec::new(), soon, true);
-    let mut cloudiness : f64 = 0.0;
+    let mut cloudiness: f64 = 0.0;
+    let mut notify_soon: bool = true;
+    let mut notify_visible: bool = true;
+    let mut duration : i32 = 0;
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
@@ -70,6 +76,10 @@ fn main() {
             Some(ref iss) => match open_notify::update(iss) {
                 Some(response) => match response {
                     Ok(s) => {
+                        duration = match open_notify::find_current(&s) {
+                            Some(s) => (s.duration.num_seconds() * 1000) as i32,
+                            None => 0
+                        };
                         current_spots = s;
                         format_str = format.to_string();
                     }
@@ -83,7 +93,40 @@ fn main() {
             },
             None => (),
         }
-        get_spots(&mut props, &current_spots, soon, cloudiness <= max_cloudiness as f64);
+        if notify {
+            if props["{iss_soonicon}"] != "" {
+                if notify_soon {
+                    Notification::new()
+                        .summary("i3owm")
+                        .body("ISS will bee visible soon!")
+                        .urgency(Urgency::Low)
+                        .show()
+                        .unwrap();
+                    notify_soon = false;
+                }
+            } else {
+                notify_soon = true;
+            }
+            if props["{iss_duration}"] != "" {
+                if notify_visible {
+                    Notification::new()
+                        .summary("i3owm")
+                        .body("ISS is visible now!")
+                        .timeout(duration)
+                        .show()
+                        .unwrap();
+                    notify_visible = false;
+                }
+            } else {
+                notify_visible = true;
+            }
+        }
+        get_spots(
+            &mut props,
+            &current_spots,
+            soon,
+            cloudiness <= max_cloudiness as f64,
+        );
         // insert current weather info and print json string or original line
         i3status_ext::update(
             &mut io,
@@ -213,7 +256,12 @@ fn get_weather(
 }
 static mut BLINK: bool = false;
 
-fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, soon: i64, visibility: bool ) {
+fn get_spots(
+    props: &mut HashMap<&str, String>,
+    spots: &Vec<open_notify::Spot>,
+    soon: i64,
+    visibility: bool,
+) {
     let current = open_notify::find_current(spots);
     let upcoming = open_notify::find_upcoming(spots);
     let satellite = "🛰".to_string();
@@ -272,7 +320,7 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
 
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
     let mut result: String = format.to_string();
-    let mut iss : bool = false;
+    let mut iss: bool = false;
     for (k, v) in props {
         let r = result.replace(k, v);
         if r != result {
@@ -280,5 +328,11 @@ fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
             iss = iss || (k.contains("{iss_") && v != "");
         }
     }
-    return result.replace( "{iss_space}", match iss { true => " ", false => "" } );
+    return result.replace(
+        "{iss_space}",
+        match iss {
+            true => " ",
+            false => "",
+        },
+    );
 }

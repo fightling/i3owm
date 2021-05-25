@@ -110,3 +110,7 @@ args:
         about:           maximum cloudiness in percent at which ISS can be treated as visible
         default_value:   "25"
         takes_value:     true
+    - notify:
+        short:           n
+        long:            notify
+        about:           if set shows notifications about ISS getting visible
