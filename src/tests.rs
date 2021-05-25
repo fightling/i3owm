@@ -6,7 +6,9 @@ const APIKEY: &str = "df8f453724ddbe2befa2d20f09b4a694";
 fn test_key(format: &str) {
     match openweathermap::blocking::weather("Berlin,DE", "metric", "en", APIKEY) {
         Ok(w) => {
-            let s = make_string(format, &w, "metric");
+            let mut props: HashMap<&str, String> = HashMap::new();
+            get_weather(&mut props, &w, &"metric");
+            let s = format_string(format, &props);
             // check if all keys have been replaced
             assert!(s.find("{").is_none());
             assert!(s.find("}").is_none());

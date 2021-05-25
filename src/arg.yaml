@@ -63,6 +63,11 @@ args:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
+            {iss_icon}      🛰 icon if ISS is visible
+            {iss_duration}  time ISS is already visible
+            {iss_riseicon}  🛰 icon if ISS is rising soon
+            {iss_rise}      count down when ISS is rising soon
+            {iss_risetime}  time when ISS will rise next
     - position:
         long:            position
         short:           p
@@ -90,4 +95,10 @@ args:
         long:            poll
         about:           duration of polling period in minutes
         default_value:   "10"
+        takes_value:     true
+    - soon:
+        short:           s
+        long:            soon
+        about:           duration in minutes when ISS rising is "soon"
+        default_value:   "30"
         takes_value:     true

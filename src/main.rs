@@ -31,28 +31,69 @@ fn main() {
         .unwrap_or("10")
         .parse::<u64>()
         .unwrap_or(10);
+    let soon = args
+        .value_of("soon")
+        .unwrap_or("30")
+        .parse::<i64>()
+        .unwrap_or(30);
     // start our observatory via OWM
-    let receiver = &openweathermap::init(location, units, lang, apikey, poll);
-
+    let owm = &openweathermap::init(location, units, lang, apikey, poll);
+    let mut iss: Option<open_notify::Receiver> = None;
     let mut io = i3status_ext::begin().unwrap();
-    // remeber newest weather update and begin with offline message
-    let mut current = String::new();
+    let mut format_str = String::new();
+    let mut props: HashMap<&str, String> = HashMap::new();
+    let mut current_spots: Vec<open_notify::Spot> = Vec::new();
+    get_spots(&mut props, &Vec::new(), soon);
     loop {
         // update current weather info if there is an update available
-        match openweathermap::update(receiver) {
+        match openweathermap::update(owm) {
             Some(response) => match response {
-                Ok(w) => current = make_string(format, &w, &units),
-                Err(e) => current = e,
+                Ok(w) => {
+                    if iss.is_none() {
+                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 1));
+                        format_str = format.to_string();
+                    }
+                    get_weather(&mut props, &w, &units);
+                }
+                Err(e) => format_str = e,
             },
             None => (),
         }
+        match iss {
+            Some(ref iss) => match open_notify::update(iss) {
+                Some(response) => match response {
+                    Ok(s) => {
+                        current_spots = s;
+                        format_str = format.to_string();
+                    }
+                    Err(e) => {
+                        if e != openweathermap::LOADING {
+                            format_str = e
+                        }
+                    }
+                },
+                None => (),
+            },
+            None => (),
+        }
+        get_spots(&mut props, &current_spots, soon);
         // insert current weather info and print json string or original line
-        i3status_ext::update(&mut io, "weather", position, reverse, &current).unwrap();
+        i3status_ext::update(
+            &mut io,
+            "weather",
+            position,
+            reverse,
+            &format_string(&format_str, &props),
+        )
+        .unwrap();
     }
 }
 
-// create a hash map of weather fetch closures by key
-fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &str) -> String {
+fn get_weather(
+    props: &mut HashMap<&str, String>,
+    current: &openweathermap::CurrentWeather,
+    units: &str,
+) {
     fn dir(current: &openweathermap::CurrentWeather) -> usize {
         (current.wind.deg as usize % 360) / 45
     }
@@ -84,77 +125,133 @@ fn make_string(format: &str, current: &openweathermap::CurrentWeather, units: &s
         return icons.get(&icon_id).unwrap_or(&"🚫");
     }
     let update: DateTime<Local> = DateTime::from(Utc.timestamp(current.dt, 0));
-    format
-        .replace("{update}", &update.format("%H:%M").to_string())
-        .replace("{city}", current.name.as_str())
-        .replace("{main}", current.weather[0].main.as_str())
-        .replace("{description}", current.weather[0].description.as_str())
-        .replace("{icon}", icon(&current.weather[0].icon))
-        .replace("{pressure}", &current.main.pressure.to_string())
-        .replace("{humidity}", &current.main.humidity.to_string())
-        .replace("{wind}", &current.wind.deg.to_string())
-        .replace("{wind_deg}", &current.wind.deg.to_string())
-        .replace("{wind}", {
-            let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
-            directions[dir(current)]
-        })
-        .replace("{wind_icon}", {
-            let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-            icons[dir(current)]
-        })
-        .replace("{deg_unit}", "°")
-        .replace("{wind_speed}", &current.wind.speed.round().to_string())
-        .replace("{visibility}", &current.visibility.to_string())
-        .replace("{visibility_km}", &(current.visibility / 1000).to_string())
-        .replace(
-            "{rain.1h}",
-            &match &current.rain {
-                Some(r) => r.h1.unwrap_or(0.0).to_string(),
-                None => "-".to_string(),
+
+    props.insert("{update}", update.format("%H:%M").to_string());
+    props.insert("{city}", current.name.as_str().to_string());
+    props.insert("{main}", current.weather[0].main.as_str().to_string());
+    props.insert(
+        "{description}",
+        current.weather[0].description.as_str().to_string(),
+    );
+    props.insert("{icon}", icon(&current.weather[0].icon).to_string());
+    props.insert("{pressure}", current.main.pressure.to_string());
+    props.insert("{humidity}", current.main.humidity.to_string());
+    props.insert("{wind}", current.wind.deg.to_string());
+    props.insert("{wind_deg}", current.wind.deg.to_string());
+    props.insert("{wind}", {
+        let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
+        directions[dir(current)].to_string()
+    });
+    props.insert("{wind_icon}", {
+        let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+        icons[dir(current)].to_string()
+    });
+    props.insert("{deg_unit}", "°".to_string());
+    props.insert("{wind_speed}", current.wind.speed.round().to_string());
+    props.insert("{visibility}", current.visibility.to_string());
+    props.insert("{visibility_km}", (current.visibility / 1000).to_string());
+    props.insert(
+        "{rain.1h}",
+        match &current.rain {
+            Some(r) => r.h1.unwrap_or(0.0).to_string(),
+            None => "-".to_string(),
+        }
+        .to_string(),
+    );
+    props.insert(
+        "{rain.3h}",
+        match &current.rain {
+            Some(r) => r.h3.unwrap_or(0.0).to_string(),
+            None => "-".to_string(),
+        },
+    );
+    props.insert(
+        "{snow.1h}",
+        match &current.snow {
+            Some(r) => r.h1.unwrap_or(0.0).to_string(),
+            None => "-".to_string(),
+        },
+    );
+    props.insert(
+        "{snow.3h}",
+        match &current.snow {
+            Some(r) => r.h3.unwrap_or(0.0).to_string(),
+            None => "-".to_string(),
+        },
+    );
+    props.insert("{temp_min}", current.main.temp_min.round().to_string());
+    props.insert("{temp_max}", current.main.temp_max.round().to_string());
+    props.insert("{feels_like}", current.main.temp.round().to_string());
+    props.insert("{temp}", current.main.temp.round().to_string());
+    props.insert(
+        "{temp_unit}",
+        match units {
+            "standard" => "K",
+            "metric" => "°C",
+            "imperial" => "°F",
+            _ => "",
+        }
+        .to_string(),
+    );
+    props.insert(
+        "{speed_unit}",
+        match units {
+            "standard" => "m/s",
+            "metric" => "m/s",
+            "imperial" => "mi/h",
+            _ => "",
+        }
+        .to_string(),
+    );
+}
+
+fn get_spots(result: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, soon: i64) {
+    let current = open_notify::find_current(spots);
+    let upcoming = open_notify::find_upcoming(spots);
+    let satellite = "🛰".to_string();
+    let empty = "".to_string();
+
+    result.insert("{iss_icon}", empty.clone());
+    result.insert("{iss_duration}", empty.clone());
+    result.insert("{iss_soonicon}", empty.clone());
+    result.insert("{iss_soon}", empty.clone());
+    result.insert("{iss_risetime}", empty.clone());
+
+    match current {
+        Some(spot) => {
+            result.insert("{iss_icon}", satellite);
+            let duration = spot.risetime - Local::now();
+            let duration = format!(
+                "{:02}:{:02}",
+                duration.num_minutes(),
+                duration.num_seconds()
+            );
+            result.insert("{iss_duration}", duration);
+        }
+        None => match upcoming {
+            Some(spot) => {
+                let duration = spot.risetime - Local::now();
+                if duration < chrono::Duration::minutes(soon) {
+                    result.insert("{iss_soonicon}", satellite);
+                    let duration = format!(
+                        "-{:02}:{:02}",
+                        duration.num_minutes(),
+                        duration.num_seconds() % 60
+                    );
+                    result.insert("{iss_soon}", duration);
+                } else {
+                    result.insert("{iss_risetime}", spot.risetime.format("%H:%M").to_string());
+                }
             }
-            .to_string(),
-        )
-        .replace(
-            "{rain.3h}",
-            &match &current.rain {
-                Some(r) => r.h3.unwrap_or(0.0).to_string(),
-                None => "-".to_string(),
-            },
-        )
-        .replace(
-            "{snow.1h}",
-            &match &current.snow {
-                Some(r) => r.h1.unwrap_or(0.0).to_string(),
-                None => "-".to_string(),
-            },
-        )
-        .replace(
-            "{snow.3h}",
-            &match &current.snow {
-                Some(r) => r.h3.unwrap_or(0.0).to_string(),
-                None => "-".to_string(),
-            },
-        )
-        .replace("{temp_min}", &current.main.temp_min.round().to_string())
-        .replace("{temp_max}", &current.main.temp_max.round().to_string())
-        .replace("{feels_like}", &current.main.temp.round().to_string())
-        .replace("{temp}", &current.main.temp.round().to_string())
-        .replace(
-            "{temp_unit}",
-            match units {
-                "standard" => "K",
-                "metric" => "°C",
-                "imperial" => "°F",
-                _ => "",
-            },
-        )
-        .replace(
-            "{speed_unit}",
-            match units {
-                "standard" => "m/s",
-                "metric" => "m/s",
-                "imperial" => "mi/h",
-                _ => "",
-            },
-        )
+            None => (),
+        },
+    }
+}
+
+fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
+    let mut result: String = format.to_string();
+    for (k, v) in props {
+        result = result.replace(k, v);
+    }
+    return result;
 }
