@@ -5,7 +5,7 @@ extern crate openweathermap;
 
 use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
-use notify_rust::{Notification,Urgency};
+use notify_rust::{Notification, Urgency};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -55,17 +55,21 @@ fn main() {
     let mut cloudiness: f64 = 0.0;
     let mut notify_soon: bool = true;
     let mut notify_visible: bool = true;
-    let mut duration : i32 = 0;
+    let mut duration: i32 = 0;
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
             Some(response) => match response {
                 Ok(w) => {
+                    // remember cloudiness for spotting visibility
                     cloudiness = w.clouds.all;
+                    // check if we have to start open_notify thread
                     if iss.is_none() {
                         iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 1));
+                        // reset format string
                         format_str = format.to_string();
                     }
+                    // get weather properties
                     get_weather(&mut props, &w, &units);
                 }
                 Err(e) => format_str = e,
@@ -76,11 +80,14 @@ fn main() {
             Some(ref iss) => match open_notify::update(iss) {
                 Some(response) => match response {
                     Ok(s) => {
+                        // remember duration of current spotting event in milliseconds for motification timeout
                         duration = match open_notify::find_current(&s) {
                             Some(s) => (s.duration.num_seconds() * 1000) as i32,
-                            None => 0
+                            None => 0,
                         };
+                        // rememeber current spotting events
                         current_spots = s;
+                        // reset format string
                         format_str = format.to_string();
                     }
                     Err(e) => {
@@ -93,6 +100,7 @@ fn main() {
             },
             None => (),
         }
+        // check for notifications
         if notify {
             if props["{iss_soonicon}"] != "" {
                 if notify_soon {
@@ -121,16 +129,17 @@ fn main() {
                 notify_visible = true;
             }
         }
+        // continuously get spot properties
         get_spots(
             &mut props,
             &current_spots,
             soon,
             cloudiness <= max_cloudiness as f64,
         );
-        // insert current weather info and print json string or original line
+        // insert current properties and print json string or original line
         i3status_ext::update(
             &mut io,
-            "weather",
+            "i3owm",
             position,
             reverse,
             &format_string(&format_str, &props),
