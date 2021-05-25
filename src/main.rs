@@ -272,8 +272,13 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
 
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
     let mut result: String = format.to_string();
+    let mut iss : bool = false;
     for (k, v) in props {
-        result = result.replace(k, v);
+        let r = result.replace(k, v);
+        if r != result {
+            result = r;
+            iss = iss || (k.contains("{iss_") && v != "");
+        }
     }
-    return result;
+    return result.replace( "{iss_space}", match iss { true => " ", false => "" } );
 }

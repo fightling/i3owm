@@ -69,6 +69,7 @@ args:
             {iss_soonicon}  🛰 icon if ISS is rising soon
             {iss_soon}      count down when ISS is rising soon
             {iss_risetime}  time when ISS will rise next
+            {iss_space}     space ' ' if iss info is displayed
     - position:
         long:            position
         short:           p
