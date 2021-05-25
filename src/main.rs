@@ -33,9 +33,14 @@ fn main() {
         .unwrap_or(10);
     let soon = args
         .value_of("soon")
-        .unwrap_or("30")
+        .unwrap_or("15")
         .parse::<i64>()
-        .unwrap_or(30);
+        .unwrap_or(15);
+    let max_cloudiness = args
+        .value_of("cloudiness")
+        .unwrap_or("25")
+        .parse::<u64>()
+        .unwrap_or(25);
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
     let mut iss: Option<open_notify::Receiver> = None;
@@ -43,12 +48,14 @@ fn main() {
     let mut format_str = String::new();
     let mut props: HashMap<&str, String> = HashMap::new();
     let mut current_spots: Vec<open_notify::Spot> = Vec::new();
-    get_spots(&mut props, &Vec::new(), soon);
+    get_spots(&mut props, &Vec::new(), soon, true);
+    let mut cloudiness : f64 = 0.0;
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
             Some(response) => match response {
                 Ok(w) => {
+                    cloudiness = w.clouds.all;
                     if iss.is_none() {
                         iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 1));
                         format_str = format.to_string();
@@ -76,7 +83,7 @@ fn main() {
             },
             None => (),
         }
-        get_spots(&mut props, &current_spots, soon);
+        get_spots(&mut props, &current_spots, soon, cloudiness <= max_cloudiness as f64);
         // insert current weather info and print json string or original line
         i3status_ext::update(
             &mut io,
@@ -204,47 +211,62 @@ fn get_weather(
         .to_string(),
     );
 }
+static mut BLINK: bool = false;
 
-fn get_spots(result: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, soon: i64) {
+fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, soon: i64, visibility: bool ) {
     let current = open_notify::find_current(spots);
     let upcoming = open_notify::find_upcoming(spots);
     let satellite = "🛰".to_string();
+    let eye = "👁".to_string();
     let empty = "".to_string();
 
-    result.insert("{iss_icon}", empty.clone());
-    result.insert("{iss_duration}", empty.clone());
-    result.insert("{iss_soonicon}", empty.clone());
-    result.insert("{iss_soon}", empty.clone());
-    result.insert("{iss_risetime}", empty.clone());
+    props.insert("{iss_icon}", empty.clone());
+    props.insert("{iss_iconblink}", empty.clone());
+    props.insert("{iss_duration}", empty.clone());
+    props.insert("{iss_soonicon}", empty.clone());
+    props.insert("{iss_soon}", empty.clone());
+    props.insert("{iss_risetime}", empty.clone());
 
-    match current {
-        Some(spot) => {
-            result.insert("{iss_icon}", satellite);
-            let duration = spot.risetime - Local::now();
-            let duration = format!(
-                "{:02}:{:02}",
-                duration.num_minutes(),
-                duration.num_seconds()
-            );
-            result.insert("{iss_duration}", duration);
-        }
-        None => match upcoming {
+    if visibility {
+        match current {
             Some(spot) => {
-                let duration = spot.risetime - Local::now();
-                if duration < chrono::Duration::minutes(soon) {
-                    result.insert("{iss_soonicon}", satellite);
-                    let duration = format!(
-                        "-{:02}:{:02}",
-                        duration.num_minutes(),
-                        duration.num_seconds() % 60
+                props.insert("{iss_icon}", satellite.clone());
+                unsafe {
+                    props.insert(
+                        "{iss_iconblink}",
+                        match BLINK {
+                            true => satellite.clone(),
+                            false => eye.clone(),
+                        },
                     );
-                    result.insert("{iss_soon}", duration);
-                } else {
-                    result.insert("{iss_risetime}", spot.risetime.format("%H:%M").to_string());
+                    BLINK = !BLINK;
                 }
+                let duration = spot.risetime - Local::now();
+                let duration = format!(
+                    "+{:02}:{:02}",
+                    duration.num_minutes(),
+                    duration.num_seconds()
+                );
+                props.insert("{iss_duration}", duration);
             }
-            None => (),
-        },
+            None => match upcoming {
+                Some(spot) => {
+                    let duration = spot.risetime - Local::now();
+                    if duration < chrono::Duration::minutes(soon) {
+                        props.insert("{iss_soonicon}", satellite);
+                        let duration = format!(
+                            "-{:02}:{:02}",
+                            duration.num_minutes(),
+                            duration.num_seconds() % 60
+                        );
+                        props.insert("{iss_soon}", duration);
+                    } else {
+                        props.insert("{iss_risetime}", spot.risetime.format("%H:%M").to_string());
+                    }
+                }
+                None => (),
+            },
+        }
     }
 }
 

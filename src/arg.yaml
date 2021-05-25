@@ -64,9 +64,10 @@ args:
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
             {iss_icon}      🛰 icon if ISS is visible
+            {iss_iconblink} 🛰/👁️ altering icon if ISS is visible
             {iss_duration}  time ISS is already visible
-            {iss_riseicon}  🛰 icon if ISS is rising soon
-            {iss_rise}      count down when ISS is rising soon
+            {iss_soonicon}  🛰 icon if ISS is rising soon
+            {iss_soon}      count down when ISS is rising soon
             {iss_risetime}  time when ISS will rise next
     - position:
         long:            position
@@ -100,5 +101,11 @@ args:
         short:           s
         long:            soon
         about:           duration in minutes when ISS rising is "soon"
-        default_value:   "30"
+        default_value:   "15"
+        takes_value:     true
+    - cloudiness:
+        short:           C
+        long:            cloudiness
+        about:           maximum cloudiness in percent at which ISS can be treated as visible
+        default_value:   "25"
         takes_value:     true
