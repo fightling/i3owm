@@ -271,23 +271,27 @@ fn get_spots(
     soon: i64,
     visibility: bool,
 ) {
-    let current = open_notify::find_current(spots);
-    let upcoming = open_notify::find_upcoming(spots);
+    // some icons
     let satellite = "🛰".to_string();
     let eye = "👁".to_string();
     let empty = "".to_string();
-
+    // get current and upcoming spotting event
+    let current = open_notify::find_current(spots);
+    let upcoming = open_notify::find_upcoming(spots);
+    // clear all ISS properties
     props.insert("{iss_icon}", empty.clone());
     props.insert("{iss_iconblink}", empty.clone());
     props.insert("{iss_duration}", empty.clone());
     props.insert("{iss_soonicon}", empty.clone());
     props.insert("{iss_soon}", empty.clone());
     props.insert("{iss_risetime}", empty.clone());
-
+    // check if we can see the sky
     if visibility {
         match current {
+            // check if we have a current spotting event
             Some(spot) => {
                 props.insert("{iss_icon}", satellite.clone());
+                // for blinking we use a global static
                 unsafe {
                     props.insert(
                         "{iss_iconblink}",
@@ -306,6 +310,7 @@ fn get_spots(
                 );
                 props.insert("{iss_duration}", duration);
             }
+            // if not check if we have an upcoming spotting event
             None => match upcoming {
                 Some(spot) => {
                     let duration = spot.risetime - Local::now();
@@ -330,13 +335,16 @@ fn get_spots(
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
     let mut result: String = format.to_string();
     let mut iss: bool = false;
+    // replace all keys by their values
     for (k, v) in props {
         let r = result.replace(k, v);
         if r != result {
             result = r;
+            // tests if an '{iss_' key of value was inserted
             iss = iss || (k.contains("{iss_") && v != "");
         }
     }
+    // insert space at '{iss_space}' if we inserted '{iss_' keys of value
     return result.replace(
         "{iss_space}",
         match iss {
