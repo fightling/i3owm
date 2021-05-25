@@ -218,6 +218,7 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
     let upcoming = open_notify::find_upcoming(spots);
     let satellite = "🛰".to_string();
     let eye = "👁".to_string();
+    let space = " ".to_string();
     let empty = "".to_string();
 
     props.insert("{iss_icon}", empty.clone());
@@ -226,6 +227,7 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
     props.insert("{iss_soonicon}", empty.clone());
     props.insert("{iss_soon}", empty.clone());
     props.insert("{iss_risetime}", empty.clone());
+    props.insert("{iss_space}", empty.clone());
 
     if visibility {
         match current {
@@ -248,6 +250,7 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
                     duration.num_seconds()
                 );
                 props.insert("{iss_duration}", duration);
+                props.insert("{iss_space}", space.clone());
             }
             None => match upcoming {
                 Some(spot) => {
@@ -263,6 +266,7 @@ fn get_spots(props: &mut HashMap<&str, String>, spots: &Vec<open_notify::Spot>, 
                     } else {
                         props.insert("{iss_risetime}", spot.risetime.format("%H:%M").to_string());
                     }
+                    props.insert("{iss_space}", space.clone());
                 }
                 None => (),
             },
