@@ -114,6 +114,10 @@ args:
         about:           Maximum cloudiness in percent at which ISS can be treated as visible
         default_value:   "25"
         takes_value:     true
+    - daytime:
+        short:           D
+        long:            daytime
+        about:           Show ISS spotting events when they are at daytime
     - level:
         short:           L
         long:            level

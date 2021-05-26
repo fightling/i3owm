@@ -8,14 +8,22 @@ fn test_key(format: &str) {
         Ok(w) => {
             let mut props: HashMap<&str, String> = HashMap::new();
             get_weather(&mut props, &w, &"metric");
-            match open_notify::blocking::spot(w.coord.lat,w.coord.lon, 0.0) {
+            match open_notify::blocking::spot(w.coord.lat, w.coord.lon, 0.0) {
                 Ok(spots) => {
-                    get_spots(&mut props, &spots, 30, true, false, &Level::RISE );
+                    get_spots(
+                        &mut props,
+                        &spots,
+                        30,
+                        &Visibility::VISIBLE,
+                        &None,
+                        false,
+                        &Level::RISE,
+                    );
                     let s = format_string(format, &props);
                     // check if all keys have been replaced
                     assert!(s.find("{").is_none());
                     assert!(s.find("}").is_none());
-                },
+                }
                 Err(_e) => assert!(false),
             }
         }
