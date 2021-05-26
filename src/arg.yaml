@@ -101,7 +101,7 @@ args:
     - soon:
         short:           s
         long:            soon
-        about:           duration in minutes when ISS rising is "soon"
+        about:           duration in minutes when ISS rising is "soon" in minutes
         default_value:   "15"
         takes_value:     true
     - cloudiness:

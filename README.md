@@ -94,7 +94,7 @@ OPTIONS:
             {update}        Local time of last update, HH:MM
             {iss_icon}      🛰  icon if ISS is visible
             {iss_iconblink} 🛰  / 👁️  altering icon if ISS is visible
-            {iss_duration}  time ISS is already visible
+            {iss_duration}  time ISS is already visible in minutes
             {iss_soonicon}  🛰  icon if ISS is rising soon
             {iss_soon}      count down when ISS is rising soon
             {iss_risetime}  time when ISS will rise next
