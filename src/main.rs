@@ -3,12 +3,20 @@ extern crate i3status_ext;
 extern crate notify_rust;
 extern crate openweathermap;
 
-use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
-use notify_rust::{Notification, Urgency};
 use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
+
+mod level;
+mod notify;
+mod spot;
+mod weather;
+
+use level::Level;
+use notify::Notify;
+use spot::*;
+use weather::*;
 
 #[cfg(test)]
 mod tests;
@@ -45,6 +53,7 @@ fn main() {
         .unwrap_or("25")
         .parse::<u64>()
         .unwrap_or(25);
+    let dayspot = args.is_present("daytime");
     let notify = args.is_present("notify");
     let blink = args.is_present("blink");
     let level = args.value_of("level").unwrap_or("soon");
@@ -63,26 +72,33 @@ fn main() {
         false => i3status_ext::begin().unwrap(),
         true => i3status_ext::begin_dummy().unwrap(),
     };
-    // we may override
+    // we may override format for error messages
     let mut format_str = openweathermap::LOADING.to_string();
-    let mut cloudiness: f64 = 0.0;
-    let mut duration: i32 = 0;
-    let mut notify_soon: bool = true;
-    let mut notify_visible: bool = true;
+    // remember visibility from weather report for ISS spotting
+    let mut visibility: Visibility = Visibility::INVISIBLE;
+    // remember daytime from weather report for ISS spotting
+    let mut daytime: Option<DayTime> = None;
+    // remember duration of current spotting event in milliseconds for motification timeout
+    let mut duration = Duration::from_millis(0);
+    // create notification state
+    let mut notify = Notify::new(notify);
+    // create blinking flag
     let mut blinking: bool = false;
     // latest spotting update
-    let mut latest_spottings: Vec<open_notify::Spot> = Vec::new();
+    let mut spottings: Vec<open_notify::Spot> = Vec::new();
     // all fetched information
-    let mut props: HashMap<&str, String> = HashMap::new();
-    // insert empty values to all spotting properties
-    get_spots(&mut props, &latest_spottings, soon, true, false, &level);
+    let mut props: HashMap<&str, String> = new_properties();
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
             Some(response) => match response {
                 Ok(w) => {
                     // remember cloudiness for spotting visibility
-                    cloudiness = w.clouds.all;
+                    visibility = Visibility::from_bool(w.clouds.all <= max_cloudiness as f64);
+                    // remember daytime from current weather if wanted
+                    if !dayspot {
+                        daytime = Some(DayTime::from_utc(w.sys.sunrise, w.sys.sunset));
+                    }
                     // check if we have to start open_notify thread
                     if iss.is_none() && format.contains("{iss_") {
                         iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 90));
@@ -101,16 +117,17 @@ fn main() {
                 Some(response) => match response {
                     Ok(s) => {
                         // remember duration of current spotting event in milliseconds for motification timeout
-                        duration = match open_notify::find_current(&s) {
-                            Some(s) => (s.duration.num_seconds() * 1000) as i32,
-                            None => 0,
+                        duration = match open_notify::find_current(&s, &daytime) {
+                            Some(s) => Duration::from_millis(s.duration.num_milliseconds() as u64),
+                            None => Duration::from_millis(0),
                         };
                         // rememeber current spotting events
-                        latest_spottings = s;
+                        spottings = s;
                         // reset format string
                         format_str = format.to_string();
                     }
                     Err(e) => {
+                        // do not show "loading..." twice
                         if e != openweathermap::LOADING {
                             format_str = e
                         }
@@ -121,43 +138,16 @@ fn main() {
             None => (),
         }
         // continuously get spot properties
-        match get_spots(
+        let level = get_spots(
             &mut props,
-            &latest_spottings,
+            &spottings,
             soon,
-            cloudiness <= max_cloudiness as f64,
+            &visibility,
+            &daytime,
             blinking,
             &level,
-        ) {
-            // check for notifications
-            Level::SOON => {
-                if notify && notify_soon {
-                    Notification::new()
-                        .summary("i3owm")
-                        .body("ISS will bee visible soon!")
-                        .urgency(Urgency::Low)
-                        .show()
-                        .unwrap();
-                    notify_soon = false;
-                    notify_visible = true;
-                }
-            }
-            Level::WATCH => {
-                if notify && notify_visible {
-                    Notification::new()
-                        .summary("i3owm")
-                        .body("ISS is visible now!")
-                        .timeout(duration)
-                        .show()
-                        .unwrap();
-                    notify_visible = false;
-                }
-            }
-            _ => {
-                notify_visible = true;
-                notify_soon = true;
-            }
-        }
+        );
+        notify.notification(duration, level);
         // toggle blinking flag
         if blink {
             blinking = !blinking;
@@ -171,234 +161,6 @@ fn main() {
             thread::sleep(Duration::from_secs(1));
         }
     }
-}
-
-/// update properties map with new weather update data
-/// #### Parameters
-/// - `props`: property map to add data into
-/// - `current`: current weather update
-/// - `units`: maximum level of spotting display that is wanted (either `"standard"`, `"metric"` or `"imperial"`
-fn get_weather(
-    props: &mut HashMap<&str, String>,
-    current: &openweathermap::CurrentWeather,
-    units: &str,
-) {
-    fn dir(current: &openweathermap::CurrentWeather) -> usize {
-        (current.wind.deg as usize % 360) / 45
-    }
-    // get a unicode symbol that matches the OWM icon
-    fn icon(icon_id: &str) -> &str {
-        let icons: HashMap<&str, &str> = [
-            ("01d", "🌞"),
-            ("01n", "🌛"),
-            ("02d", "🌤"),
-            ("02n", "🌤"),
-            ("03d", "⛅"),
-            ("03n", "⛅"),
-            ("04d", "⛅"),
-            ("04n", "⛅"),
-            ("09d", "🌧"),
-            ("09n", "🌧"),
-            ("10d", "🌦"),
-            ("10n", "🌦"),
-            ("11d", "🌩"),
-            ("11n", "🌩"),
-            ("13d", "❄"),
-            ("13n", "❄"),
-            ("50d", "🌫"),
-            ("50n", "🌫"),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-        return icons.get(&icon_id).unwrap_or(&"🚫");
-    }
-    let update: DateTime<Local> = DateTime::from(Utc.timestamp(current.dt, 0));
-
-    props.insert("{update}", update.format("%H:%M").to_string());
-    props.insert("{city}", current.name.as_str().to_string());
-    props.insert("{main}", current.weather[0].main.as_str().to_string());
-    props.insert(
-        "{description}",
-        current.weather[0].description.as_str().to_string(),
-    );
-    props.insert("{icon}", icon(&current.weather[0].icon).to_string());
-    props.insert("{pressure}", current.main.pressure.to_string());
-    props.insert("{humidity}", current.main.humidity.to_string());
-    props.insert("{wind}", current.wind.deg.to_string());
-    props.insert("{wind_deg}", current.wind.deg.to_string());
-    props.insert("{wind}", {
-        let directions = ["N", "NO", "O", "SO", "S", "SW", "W", "NW"];
-        directions[dir(current)].to_string()
-    });
-    props.insert("{wind_icon}", {
-        let icons = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-        icons[dir(current)].to_string()
-    });
-    props.insert("{deg_unit}", "°".to_string());
-    props.insert("{wind_speed}", current.wind.speed.round().to_string());
-    props.insert("{visibility}", current.visibility.to_string());
-    props.insert("{visibility_km}", (current.visibility / 1000).to_string());
-    props.insert(
-        "{rain.1h}",
-        match &current.rain {
-            Some(r) => r.h1.unwrap_or(0.0).to_string(),
-            None => "-".to_string(),
-        }
-        .to_string(),
-    );
-    props.insert(
-        "{rain.3h}",
-        match &current.rain {
-            Some(r) => r.h3.unwrap_or(0.0).to_string(),
-            None => "-".to_string(),
-        },
-    );
-    props.insert(
-        "{snow.1h}",
-        match &current.snow {
-            Some(r) => r.h1.unwrap_or(0.0).to_string(),
-            None => "-".to_string(),
-        },
-    );
-    props.insert(
-        "{snow.3h}",
-        match &current.snow {
-            Some(r) => r.h3.unwrap_or(0.0).to_string(),
-            None => "-".to_string(),
-        },
-    );
-    props.insert("{temp_min}", current.main.temp_min.round().to_string());
-    props.insert("{temp_max}", current.main.temp_max.round().to_string());
-    props.insert("{feels_like}", current.main.temp.round().to_string());
-    props.insert("{temp}", current.main.temp.round().to_string());
-    props.insert(
-        "{temp_unit}",
-        match units {
-            "standard" => "K",
-            "metric" => "°C",
-            "imperial" => "°F",
-            _ => "",
-        }
-        .to_string(),
-    );
-    props.insert(
-        "{speed_unit}",
-        match units {
-            "standard" => "m/s",
-            "metric" => "m/s",
-            "imperial" => "mi/h",
-            _ => "",
-        }
-        .to_string(),
-    );
-}
-
-#[derive(PartialEq, Eq)]
-enum Level {
-    NONE,
-    /// only show duration while ISS is visible
-    WATCH,
-    /// show latency until ISS will be visible (includes 'watch')
-    SOON,
-    /// show time of next spotting event (includes 'soon' and 'watch')
-    RISE,
-}
-
-/// update properties map with new open-notify data
-/// #### Parameters
-/// - `props`: property map to add data into
-/// - `spots`: spotting events from open-notify
-/// - `soon`: maximum duration in minutes which will be treated as *soon*
-/// - `visibility`: `true` if sky is visible
-/// - `blink`: `true` if icon shall blink while spotting
-/// - `level`: maximum level of spotting display that is wanted
-/// #### Return value
-/// - level of spotting display that was used
-fn get_spots(
-    props: &mut HashMap<&str, String>,
-    spots: &Vec<open_notify::Spot>,
-    soon: i64,
-    visibility: bool,
-    blink: bool,
-    level: &Level,
-) -> Level {
-    // some icons
-    let satellite = "🛰".to_string();
-    let eye = "👁".to_string();
-    let empty = "".to_string();
-    // get current and upcoming spotting event
-    let current = open_notify::find_current(spots);
-    let upcoming = open_notify::find_upcoming(spots);
-    // check if we can see the sky
-    if visibility {
-        match current {
-            // check if we have a current spotting event
-            Some(spot) => {
-                // insert (maybe blinking) icon
-                props.insert(
-                    "{iss_icon}",
-                    match blink {
-                        false => satellite.clone(),
-                        true => eye.clone(),
-                    },
-                );
-                // calculate duration until current spotting event
-                let duration = Local::now() - spot.risetime;
-                // format duration (remove any leading zeros)
-                let duration = format!(
-                    "+{:02}:{:02}:{:02}",
-                    duration.num_hours(),
-                    duration.num_minutes() % 60,
-                    duration.num_seconds() % 60
-                )
-                .replace("00:", "");
-                // insert duration
-                props.insert("{iss}", duration);
-                return Level::WATCH;
-            }
-            // if not check if we have an upcoming spotting event
-            None => match upcoming {
-                Some(spot) => {
-                    // calculate duration until upcoming spotting event
-                    let duration = spot.risetime - Local::now();
-                    // check if duration is soon
-                    if duration < chrono::Duration::minutes(soon)
-                        && [Level::SOON, Level::RISE].contains(&level)
-                    {
-                        // insert icon
-                        props.insert("{iss_icon}", satellite.clone());
-                        // format duration (remove any leading zeros)
-                        let duration = format!(
-                            "-{:02}:{:02}:{:02}",
-                            duration.num_hours(),
-                            duration.num_minutes() % 60,
-                            duration.num_seconds() % 60
-                        )
-                        .replace("00:", "");
-                        // insert duration
-                        props.insert("{iss}", duration);
-                        return Level::SOON;
-                    } else if level == &Level::RISE {
-                        // insert icon
-                        props.insert("{iss_icon}", satellite.clone());
-                        // format and insert time
-                        if duration > chrono::Duration::days(1) {
-                            props.insert("{iss}", spot.risetime.format("%x %R").to_string());
-                        } else {
-                            props.insert("{iss}", spot.risetime.format("%R").to_string());
-                        }
-                        return Level::RISE;
-                    }
-                }
-                None => (),
-            },
-        }
-    }
-    // remove unused keys
-    props.insert("{iss_icon}", empty.clone());
-    props.insert("{iss}", empty.clone());
-    return Level::NONE;
 }
 
 /// insert properties into format string
