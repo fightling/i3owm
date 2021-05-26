@@ -85,7 +85,7 @@ fn main() {
                     cloudiness = w.clouds.all;
                     // check if we have to start open_notify thread
                     if iss.is_none() && format.contains("{iss_") {
-                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 1));
+                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 90));
                     }
                     // get weather properties
                     get_weather(&mut props, &w, &units);
