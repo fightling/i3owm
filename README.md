@@ -114,7 +114,7 @@ OPTIONS:
             {update}        Local time of last update, HH:MM
             {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss)
                             or duration (+hh::mm::ss)
-            {iss_icon}      show 🛰   if ISS is visible
+            {iss_icon}      show 🛰  if ISS is visible
             {iss_space}     space (' ') if any ISS information is displayed
              [default: {city} {icon} {temp}{temp_unit}]
 
