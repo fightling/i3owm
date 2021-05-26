@@ -69,7 +69,8 @@ args:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
-            {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss) or duration (+hh::mm::ss)
+            {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss)
+                            or duration (+hh::mm::ss)
             {iss_icon}      show 🛰   if ISS is visible
             {iss_space}     space (' ') if any ISS information is displayed
     - position:
