@@ -8,7 +8,7 @@ rust implementation of Open Weather Map add-on for i3status
 
 ```
 bar {
-  status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit} 💧{humidity}%'
+  status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit} 💧{humidity}%'
 }
 ```
 
