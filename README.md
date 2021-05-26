@@ -41,6 +41,9 @@ FLAGS:
     -h, --help
             Prints help information
 
+    -n, --notify
+            if set shows notifications about ISS getting visible
+
     -r, --reverse
             reverse position (from right)
 
@@ -51,6 +54,9 @@ FLAGS:
 OPTIONS:
     -k, --apikey <apikey>
             OpenWeatherMap API key (see at https://openweathermap.org/api)
+
+    -C, --cloudiness <cloudiness>
+            maximum cloudiness in percent at which ISS can be treated as visible [default: 25]
 
     -f, --format <format>
             format string including one ore more of the following keys
@@ -86,6 +92,13 @@ OPTIONS:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
+            {iss_icon}      🛰  icon if ISS is visible
+            {iss_iconblink} 🛰  / 👁️  altering icon if ISS is visible
+            {iss_duration}  time ISS is already visible
+            {iss_soonicon}  🛰  icon if ISS is rising soon
+            {iss_soon}      count down when ISS is rising soon
+            {iss_risetime}  time when ISS will rise next
+            {iss_space}     space ' ' if iss info is displayed
              [default: {city} {icon} {temp}{temp_unit}]
 
     -l, --lang <lang>
@@ -101,6 +114,9 @@ OPTIONS:
 
     -p, --position <position>
             position of output in JSON when wrapping i3status
+
+    -s, --soon <soon>
+            duration in minutes when ISS rising is "soon" [default: 15]
 
     -u, --units <units>
             use imperial units [default: metric] [possible values: metric, imperial, standard]

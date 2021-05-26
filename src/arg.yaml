@@ -63,10 +63,10 @@ args:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
-            {iss_icon}      🛰 icon if ISS is visible
-            {iss_iconblink} 🛰/👁️ altering icon if ISS is visible
+            {iss_icon}      🛰   if ISS is visible
+            {iss_iconblink} 🛰  / 👁️  altering if ISS is visible
             {iss_duration}  time ISS is already visible
-            {iss_soonicon}  🛰 icon if ISS is rising soon
+            {iss_soonicon}  🛰  if ISS is rising soon
             {iss_soon}      count down when ISS is rising soon
             {iss_risetime}  time when ISS will rise next
             {iss_space}     space ' ' if iss info is displayed
