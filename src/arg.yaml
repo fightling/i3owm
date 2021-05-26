@@ -10,6 +10,12 @@ after_long_help:         |
             }
 
             Example output: ⛅ 11°C
+
+            bar {
+              status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{iss_icon}{iss}'
+            }
+
+            Example output: 🛰+03:12
 args:
     - apikey:
         short:           k
@@ -63,12 +69,8 @@ args:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
-            {iss_icon}      🛰   if ISS is visible
-            {iss_iconblink} 🛰  / 👁️  altering if ISS is visible
-            {iss_duration}  time ISS is already visible
-            {iss_soonicon}  🛰  if ISS is rising soon
-            {iss_soon}      count down when ISS is rising soon
-            {iss_risetime}  time when ISS will rise next
+            {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss) or duration (+hh::mm::ss)
+            {iss_icon}      show 🛰   if ISS is visible
             {iss_space}     space (' ') if any ISS information is displayed
     - position:
         long:            position
@@ -110,6 +112,21 @@ args:
         about:           maximum cloudiness in percent at which ISS can be treated as visible
         default_value:   "25"
         takes_value:     true
+    - level:
+        short:           L
+        long:            level
+        about:           ISS spotting level
+        long_about:      |
+            watch = only show duration while ISS is visible
+            soon = show latency until ISS will be visible (includes 'watch')
+            rise = show time of next spotting event (includes 'soon' and 'watch')
+        default_value:   soon
+        takes_value:     true
+        possible_values: [ watch, soon, rise ]
+    - blink:
+        short:           b
+        long:            blink
+        about:           let ISS icon blink when visible
     - notify:
         short:           n
         long:            notify

@@ -44,6 +44,13 @@ fn main() {
         .parse::<u64>()
         .unwrap_or(25);
     let notify = args.is_present("notify");
+    let blink = args.is_present("blink");
+    let level = args.value_of("level").unwrap_or("soon");
+    let level = match level {
+        "watch" => Level::WATCH,
+        "rise" => Level::RISE,
+        _ => Level::SOON,
+    };
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
     // open-notify receiver will get created if we get coordinates from weather update
@@ -51,17 +58,18 @@ fn main() {
     // start i3status parsing
     let mut io = i3status_ext::begin().unwrap();
     // we may override
-    let mut format_str = format.to_string();
+    let mut format_str = openweathermap::LOADING.to_string();
+    let mut cloudiness: f64 = 0.0;
+    let mut duration: i32 = 0;
+    let mut notify_soon: bool = true;
+    let mut notify_visible: bool = true;
+    let mut blinking: bool = false;
     // latest spotting update
     let mut latest_spottings: Vec<open_notify::Spot> = Vec::new();
     // all fetched information
     let mut props: HashMap<&str, String> = HashMap::new();
     // insert empty values to all spotting properties
-    get_spots(&mut props, &latest_spottings, soon, true);
-    let mut cloudiness: f64 = 0.0;
-    let mut duration: i32 = 0;
-    let mut notify_soon: bool = true;
-    let mut notify_visible: bool = true;
+    get_spots(&mut props, &latest_spottings, soon, true, false, &level);
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
@@ -106,10 +114,18 @@ fn main() {
             },
             None => (),
         }
-        // check for notifications
-        if notify {
-            if props["{iss_soonicon}"] != "" {
-                if notify_soon {
+        // continuously get spot properties
+        match get_spots(
+            &mut props,
+            &latest_spottings,
+            soon,
+            cloudiness <= max_cloudiness as f64,
+            blinking,
+            &level,
+        ) {
+            // check for notifications
+            Level::SOON => {
+                if notify && notify_soon {
                     Notification::new()
                         .summary("i3owm")
                         .body("ISS will bee visible soon!")
@@ -117,12 +133,11 @@ fn main() {
                         .show()
                         .unwrap();
                     notify_soon = false;
+                    notify_visible = true;
                 }
-            } else {
-                notify_soon = true;
             }
-            if props["{iss_duration}"] != "" {
-                if notify_visible {
+            Level::WATCH => {
+                if notify && notify_visible {
                     Notification::new()
                         .summary("i3owm")
                         .body("ISS is visible now!")
@@ -131,17 +146,15 @@ fn main() {
                         .unwrap();
                     notify_visible = false;
                 }
-            } else {
+            }
+            _ => {
                 notify_visible = true;
+                notify_soon = true;
             }
         }
-        // continuously get spot properties
-        get_spots(
-            &mut props,
-            &latest_spottings,
-            soon,
-            cloudiness <= max_cloudiness as f64,
-        );
+        if blink {
+            blinking = !blinking;
+        }
         // insert current properties and print json string or original line
         i3status_ext::update(
             &mut io,
@@ -271,14 +284,26 @@ fn get_weather(
     );
 }
 
+#[derive(PartialEq, Eq)]
+enum Level {
+    NONE,
+    /// only show duration while ISS is visible
+    WATCH,
+    /// show latency until ISS will be visible (includes 'watch')
+    SOON,
+    /// show time of next spotting event (includes 'soon' and 'watch')
+    RISE,
+}
+
 /// update properties map with new open-notify data
 fn get_spots(
     props: &mut HashMap<&str, String>,
     spots: &Vec<open_notify::Spot>,
     soon: i64,
     visibility: bool,
-) {
-    static mut BLINK: bool = false;
+    blink: bool,
+    level: &Level,
+) -> Level {
     // some icons
     let satellite = "🛰".to_string();
     let eye = "👁".to_string();
@@ -286,60 +311,62 @@ fn get_spots(
     // get current and upcoming spotting event
     let current = open_notify::find_current(spots);
     let upcoming = open_notify::find_upcoming(spots);
-    // clear all ISS properties
-    props.insert("{iss_icon}", empty.clone());
-    props.insert("{iss_iconblink}", empty.clone());
-    props.insert("{iss_duration}", empty.clone());
-    props.insert("{iss_soonicon}", empty.clone());
-    props.insert("{iss_soon}", empty.clone());
-    props.insert("{iss_risetime}", empty.clone());
     // check if we can see the sky
     if visibility {
         match current {
             // check if we have a current spotting event
             Some(spot) => {
-                props.insert("{iss_icon}", satellite.clone());
-                // for blinking we use a global static
-                unsafe {
-                    props.insert(
-                        "{iss_iconblink}",
-                        match BLINK {
-                            true => satellite.clone(),
-                            false => eye.clone(),
-                        },
-                    );
-                    BLINK = !BLINK;
-                }
+                props.insert(
+                    "{iss_icon}",
+                    match blink {
+                        true => satellite.clone(),
+                        false => eye.clone(),
+                    },
+                );
                 let duration = spot.risetime - Local::now();
                 let duration = format!(
                     "+{:02}:{:02}:{:02}",
                     duration.num_hours(),
                     duration.num_minutes() % 60,
                     duration.num_seconds() % 60
-                ).replace("00:","");
-                props.insert("{iss_duration}", duration);
+                )
+                .replace("00:", "");
+                props.insert("{iss}", duration);
+                return Level::WATCH;
             }
             // if not check if we have an upcoming spotting event
             None => match upcoming {
                 Some(spot) => {
                     let duration = spot.risetime - Local::now();
-                    if duration < chrono::Duration::minutes(soon) {
-                        props.insert("{iss_soonicon}", satellite);
+                    if duration < chrono::Duration::minutes(soon)
+                        && [Level::SOON, Level::RISE].contains(&level)
+                    {
+                        props.insert("{iss_icon}", satellite.clone());
                         let duration = format!(
                             "-{:02}:{:02}:{:02}",
                             duration.num_hours(),
                             duration.num_minutes() % 60,
                             duration.num_seconds() % 60
                         );
-                        props.insert("{iss_soon}", duration);
-                    } else {
-                        props.insert("{iss_risetime}", spot.risetime.format("%H:%M").to_string());
+                        props.insert("{iss}", duration);
+                        return Level::SOON;
+                    } else if level == &Level::RISE {
+                        props.insert("{iss_icon}", satellite.clone());
+                        if duration  > chrono::Duration::days(1) {
+                            props.insert("{iss}", spot.risetime.format("%x %R").to_string());
+                        } else {
+                            props.insert("{iss}", spot.risetime.format("%R").to_string());
+                        }
+                        return Level::RISE;
                     }
                 }
                 None => (),
             },
         }
     }
+    props.insert("{iss_icon}", empty.clone());
+    props.insert("{iss}", empty.clone());
+    return Level::NONE;
 }
 
 /// insert properties into format string
