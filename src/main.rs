@@ -7,6 +7,8 @@ use chrono::prelude::*;
 use clap::{crate_version, load_yaml, App};
 use notify_rust::{Notification, Urgency};
 use std::collections::HashMap;
+use std::thread;
+use std::time::Duration;
 
 #[cfg(test)]
 mod tests;
@@ -51,12 +53,16 @@ fn main() {
         "rise" => Level::RISE,
         _ => Level::SOON,
     };
+    let test = args.is_present("test");
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
     // open-notify receiver will get created if we get coordinates from weather update
     let mut iss: Option<open_notify::Receiver> = None;
     // start i3status parsing
-    let mut io = i3status_ext::begin().unwrap();
+    let mut io = match test {
+        false => i3status_ext::begin().unwrap(),
+        true => i3status_ext::begin_dummy().unwrap(),
+    };
     // we may override
     let mut format_str = openweathermap::LOADING.to_string();
     let mut cloudiness: f64 = 0.0;
@@ -156,15 +162,14 @@ fn main() {
         if blink {
             blinking = !blinking;
         }
-        // insert current properties and print json string or original line
-        i3status_ext::update(
-            &mut io,
-            "i3owm",
-            position,
-            reverse,
-            &format_string(&format_str, &props),
-        )
-        .unwrap();
+        let output = format_string(&format_str, &props);
+        if !test {
+            // insert current properties and print json string or original line
+            i3status_ext::update(&mut io, "i3owm", position, reverse, &output).unwrap();
+        } else {
+            println!("{}", output);
+            thread::sleep(Duration::from_secs(1));
+        }
     }
 }
 

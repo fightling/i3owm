@@ -132,3 +132,7 @@ args:
         short:           n
         long:            notify
         about:           if set shows notifications about ISS getting visible
+    - test:
+        short:           t
+        long:            test
+        about:           do not process i3status from stdin, instead show native data

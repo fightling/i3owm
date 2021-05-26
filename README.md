@@ -67,6 +67,9 @@ FLAGS:
     -r, --reverse
             reverse position (from right)
 
+    -t, --test
+            do not process i3status from stdin, instead show native data
+
     -V, --version
             Prints version information
 
@@ -114,7 +117,7 @@ OPTIONS:
             {update}        Local time of last update, HH:MM
             {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss)
                             or duration (+hh::mm::ss)
-            {iss_icon}      show 🛰 if ISS is visible
+            {iss_icon}      show 🛰  if ISS is visible
             {iss_space}     space (' ') if any ISS information is displayed
              [default: {city} {icon} {temp}{temp_unit}]
 
@@ -160,6 +163,7 @@ EXAMPLE:
     }
 
     Example output: 🛰+03:12
+
 ```
 
 
