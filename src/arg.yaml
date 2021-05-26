@@ -1,5 +1,5 @@
 name:                    i3owm
-about:                   Open Weather extension for i3status
+about:                   Weather and ISS spotting extension for i3status
 after_long_help:         |
         EXAMPLE:
             Within your i3 configutation file just pipe the i3status output to i3owm like in the

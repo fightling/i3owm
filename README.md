@@ -49,7 +49,7 @@ cargo install i3owm
 
 ```
 ▶ i3owm --help
-Open Weather extension for i3status
+Weather and ISS spotting extension for i3status
 
 USAGE:
     i3owm [FLAGS] [OPTIONS]
