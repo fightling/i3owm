@@ -98,7 +98,7 @@ OPTIONS:
             {iss_soonicon}  🛰  icon if ISS is rising soon
             {iss_soon}      count down when ISS is rising soon
             {iss_risetime}  time when ISS will rise next
-            {iss_space}     space ' ' if iss info is displayed
+            {iss_space}     space (' ') if any ISS information is displayed
              [default: {city} {icon} {temp}{temp_unit}]
 
     -l, --lang <lang>
@@ -123,14 +123,20 @@ OPTIONS:
 
 
 EXAMPLE:
-    Within your i3 configutation file just pipe the i3status output to i3owm like in the
+    Within your i3 configuration file just pipe the i3status output to i3owm like in the
     following example (you will have top replace <key> with your API key to make it work):
 
     bar {
-      status_command i3status | i3owm -p 2 -r -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit}'
+      status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit}'
     }
 
     Example output: ⛅ 11°C
+
+    bar {
+      status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{iss_icon}{iss_duration}'
+    }
+
+    Example output: 🛰+03:12
 ```
 
 
