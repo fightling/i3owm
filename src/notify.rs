@@ -12,8 +12,8 @@ impl Notify {
     pub fn new(suppress: bool) -> Notify {
         Notify {
             suppress: suppress,
-            soon: false,
-            visible: false,
+            soon: true,
+            visible: true,
         }
     }
     pub fn notification(&mut self, duration: Duration, level: Level) {
