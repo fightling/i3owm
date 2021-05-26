@@ -1,6 +1,6 @@
 # I3owm [![Rust](https://github.com/fightling/i3owm/actions/workflows/rust.yml/badge.svg)](https://github.com/fightling/i3owm/actions/workflows/rust.yml)
 
-rust implementation of Open Weather Map add-on for i3status
+rust implementation of Open Weather Map and open-notify (ISS spotting) add-on for i3status
 
 ## Contents
 
