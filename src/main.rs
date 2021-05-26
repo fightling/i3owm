@@ -319,8 +319,8 @@ fn get_spots(
                 props.insert(
                     "{iss_icon}",
                     match blink {
-                        true => satellite.clone(),
-                        false => eye.clone(),
+                        false => satellite.clone(),
+                        true => eye.clone(),
                     },
                 );
                 let duration = spot.risetime - Local::now();
