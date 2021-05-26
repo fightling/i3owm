@@ -18,7 +18,7 @@ Output would be like:
 ⛅ 11°C 💧55%
 ```
 
-### Display ISS spotting event
+### Display ISS Spotting Events
 
 ```
 bar {
