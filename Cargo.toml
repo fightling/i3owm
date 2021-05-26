@@ -1,9 +1,9 @@
 [package]
 name = "i3owm"
-version = "0.2.6-beta.1"
+version = "0.2.7-beta.3"
 authors = ["Patrick Hoffmann fightling@elektropost.org>"]
 edition = "2018"
-description = "Open Weather extension for i3status"
+description = "Weather and ISS spotting extension for i3status"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 documentation = "https://docs.rs/i3owm"
@@ -17,3 +17,5 @@ clap = { version = "3.0.0-beta.2", features = ["yaml"] }
 chrono = "0.4.7"
 i3status_ext = "0.1.0-beta.1"
 openweathermap = "0.2.0-beta.1"
+open_notify = "0.1.0"
+notify-rust = "4.5.2"

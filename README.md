@@ -2,7 +2,9 @@
 
 rust implementation of Open Weather Map add-on for i3status
 
-Example usage in i3config:
+## Usage Examples
+
+### Display Weather
 
 ```
 bar {
@@ -14,6 +16,21 @@ Output would be like:
 
 ```
 ⛅ 11°C 💧55%
+```
+
+### Display ISS Spotting Events
+
+```
+bar {
+  status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{iss_icon}{iss}'
+}
+
+```
+
+Output would be like:
+
+```
+    🛰+03:12
 ```
 
 ## Get API key for OpenWeatherMap
@@ -38,8 +55,14 @@ USAGE:
     i3owm [FLAGS] [OPTIONS]
 
 FLAGS:
+    -b, --blink
+            let ISS icon blink when visible
+
     -h, --help
             Prints help information
+
+    -n, --notify
+            if set shows notifications about ISS getting visible
 
     -r, --reverse
             reverse position (from right)
@@ -51,6 +74,9 @@ FLAGS:
 OPTIONS:
     -k, --apikey <apikey>
             OpenWeatherMap API key (see at https://openweathermap.org/api)
+
+    -C, --cloudiness <cloudiness>
+            maximum cloudiness in percent at which ISS can be treated as visible [default: 25]
 
     -f, --format <format>
             format string including one ore more of the following keys
@@ -86,10 +112,20 @@ OPTIONS:
             {speed_unit}    Wind speed unit
                             (standard=m/s, metric=m/s, imperial=mi/h)
             {update}        Local time of last update, HH:MM
+            {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss) or duration
+            (+hh::mm::ss)
+            {iss_icon}      show 🛰   if ISS is visible
+            {iss_space}     space (' ') if any ISS information is displayed
              [default: {city} {icon} {temp}{temp_unit}]
 
     -l, --lang <lang>
             two character language code of weather descriptions [default: en]
+
+    -L, --level <level>
+            watch = only show duration while ISS is visible
+            soon = show latency until ISS will be visible (includes 'watch')
+            rise = show time of next spotting event (includes 'soon' and 'watch')
+             [default: soon] [possible values: watch, soon, rise]
 
     -c, --location <location>
             city's name maybe followed by comma-separated 2-letter (state code for the USA locations
@@ -101,6 +137,9 @@ OPTIONS:
 
     -p, --position <position>
             position of output in JSON when wrapping i3status
+
+    -s, --soon <soon>
+            duration in minutes when ISS rising is "soon" in minutes [default: 15]
 
     -u, --units <units>
             use imperial units [default: metric] [possible values: metric, imperial, standard]
@@ -115,6 +154,12 @@ EXAMPLE:
     }
 
     Example output: ⛅ 11°C
+
+    bar {
+      status_command i3status | i3owm -rp2 -k <key> -c Berlin,DE -f '{iss_icon}{iss}'
+    }
+
+    Example output: 🛰+03:12
 ```
 
 
