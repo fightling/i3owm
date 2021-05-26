@@ -77,7 +77,7 @@ args:
         long:            position
         short:           p
         about:           Position of output in JSON when wrapping i3status
-        default_value:   0
+        default_value:   "0"
         takes_value:     true
     - lang:
         short:           l
