@@ -344,7 +344,7 @@ fn get_spots(
                     },
                 );
                 // calculate duration until current spotting event
-                let duration = spot.risetime - Local::now();
+                let duration = Local::now() - spot.risetime;
                 // format duration (remove any leading zeros)
                 let duration = format!(
                     "+{:02}:{:02}:{:02}",
