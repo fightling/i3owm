@@ -25,14 +25,14 @@ args:
     - location:
         short:           c
         long:            location
-        about:           location city name, city ID or coordinate
+        about:           Location city name, city ID or coordinate
         long_about:      city's name maybe followed by comma-separated 2-letter (state code for the USA locations and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or geographical coordinate as comma-separated latitude and longitude.
         takes_value:     true
         default_value:   Berlin,DE
     - format:
         short:           f
         long:            format
-        about:           format string
+        about:           Display format string
         default_value:   "{city} {icon} {temp}{temp_unit}"
         takes_value:     true
         long_about:      |
@@ -76,41 +76,42 @@ args:
     - position:
         long:            position
         short:           p
-        about:           position of output in JSON when wrapping i3status
+        about:           Position of output in JSON when wrapping i3status
+        default_value:   0
         takes_value:     true
     - lang:
         short:           l
         long:            lang
-        about:           two character language code of weather descriptions
+        about:           Two character language code of weather descriptions
         default_value:   en
         takes_value:     true
     - reverse:
         short:           r
         long:            reverse
-        about:           reverse position (from right)
+        about:           Reverse position (from right)
     - units:
         short:           u
         long:            units
-        about:           use imperial units
+        about:           Use imperial units
         takes_value:     true
         possible_values: [ metric, imperial, standard ]
         default_value:   metric
     - poll:
         short:           P
         long:            poll
-        about:           duration of polling period in minutes
+        about:           Duration of polling period in minutes
         default_value:   "10"
         takes_value:     true
     - soon:
         short:           s
         long:            soon
-        about:           duration in minutes when ISS rising is "soon" in minutes
+        about:           Duration in minutes when ISS rising is "soon" in minutes
         default_value:   "15"
         takes_value:     true
     - cloudiness:
         short:           C
         long:            cloudiness
-        about:           maximum cloudiness in percent at which ISS can be treated as visible
+        about:           Maximum cloudiness in percent at which ISS can be treated as visible
         default_value:   "25"
         takes_value:     true
     - level:
@@ -127,12 +128,12 @@ args:
     - blink:
         short:           b
         long:            blink
-        about:           let ISS icon blink when visible
+        about:           Let ISS icon blink when visible
     - notify:
         short:           n
         long:            notify
-        about:           if set shows notifications about ISS getting visible
+        about:           Show notifications about ISS getting visible
     - test:
         short:           t
         long:            test
-        about:           do not process i3status from stdin, instead show native data
+        about:           Do not process i3status from stdin, instead show formatted string
