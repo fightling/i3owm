@@ -11,7 +11,7 @@ use std::collections::HashMap;
 #[cfg(test)]
 mod tests;
 
-// continuously inject weather into incoming json lines from i3status and pass through
+/// continuously inject weather into incoming json lines from i3status and pass through
 fn main() {
     // fetch arguments
     let yaml = load_yaml!("arg.yaml");
@@ -46,16 +46,22 @@ fn main() {
     let notify = args.is_present("notify");
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
+    // open-notify receiver will get created if we get coordinates from weather update
     let mut iss: Option<open_notify::Receiver> = None;
+    // start i3status parsing
     let mut io = i3status_ext::begin().unwrap();
-    let mut format_str = String::new();
+    // we may override
+    let mut format_str = format.to_string();
+    // latest spotting update
+    let mut latest_spottings: Vec<open_notify::Spot> = Vec::new();
+    // all fetched information
     let mut props: HashMap<&str, String> = HashMap::new();
-    let mut current_spots: Vec<open_notify::Spot> = Vec::new();
-    get_spots(&mut props, &Vec::new(), soon, true);
+    // insert empty values to all spotting properties
+    get_spots(&mut props, &latest_spottings, soon, true);
     let mut cloudiness: f64 = 0.0;
+    let mut duration: i32 = 0;
     let mut notify_soon: bool = true;
     let mut notify_visible: bool = true;
-    let mut duration: i32 = 0;
     loop {
         // update current weather info if there is an update available
         match openweathermap::update(owm) {
@@ -86,7 +92,7 @@ fn main() {
                             None => 0,
                         };
                         // rememeber current spotting events
-                        current_spots = s;
+                        latest_spottings = s;
                         // reset format string
                         format_str = format.to_string();
                     }
@@ -132,7 +138,7 @@ fn main() {
         // continuously get spot properties
         get_spots(
             &mut props,
-            &current_spots,
+            &latest_spottings,
             soon,
             cloudiness <= max_cloudiness as f64,
         );
@@ -148,6 +154,7 @@ fn main() {
     }
 }
 
+/// update properties map with new weather update data
 fn get_weather(
     props: &mut HashMap<&str, String>,
     current: &openweathermap::CurrentWeather,
@@ -264,6 +271,7 @@ fn get_weather(
     );
 }
 
+/// update properties map with new open-notify data
 fn get_spots(
     props: &mut HashMap<&str, String>,
     spots: &Vec<open_notify::Spot>,
@@ -332,6 +340,7 @@ fn get_spots(
     }
 }
 
+/// insert properties into format string
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
     let mut result: String = format.to_string();
     let mut iss: bool = false;
