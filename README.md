@@ -10,6 +10,9 @@ rust implementation of Open Weather Map add-on for i3status
 - [Installation](#installation)   
 - [Usage](#usage)   
    - [Program Arguments](#program-arguments)   
+      - [Required Arguments](#required-arguments)   
+      - [Options](#options)   
+      - [Optional Arguments](#optional-arguments)   
    - [Display Format](#display-format)   
       - [Available Properties](#available-properties)   
       - [Testing your Display Format](#testing-your-display-format)   
@@ -42,24 +45,29 @@ cargo install i3owm
 
 ### Program Arguments
 
-*i3owm* needs the following parameters
+#### Required Arguments
+
+| Option              | Parameter  | Description |
+|---------------------|------------|-------------|
+| `-k`, `--apikey`    | `<apikey>` | Set OpenWeatherMap API key (see at https://openweathermap.org/price) |
+
+#### Options
+
+| Option              | Parameter  | Description |
+|---------------------|------------|-------------|
+| `-b`, `--blink`     |            | Let ISS icon blink when visible |
+| `-h`, `--help`      |            | Prints help information |
+| `-n`, `--notify`    |            | Show notifications about ISS getting visible |
+| `-r`, `--reverse`   |            | Reverse position (from right) |
+| `-t`, `--test`      |            | Do **not** process i3status from stdin, instead show formatted string |
+| `-V`, `--version`   |            | Prints version information |
+
+#### Optional Arguments
 
 | Option              | Parameter  | Description | Default |
 |---------------------|------------|-------------|---------|
-| `-k`, `--apikey`    | `<apikey>` | Set OpenWeatherMap API key (see at https://openweathermap.org/price) | |
 | `-f`, `--format`    | `<format>` | Format string including one ore more of the following keys | `{city} {icon} {temp}{temp_unit}` |
 | `-c`, `--location`  | `<location>` | City's name maybe followed by comma-separated 2-letter (state code for the USA locations and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or geographical coordinate as comma-separated latitude and longitude. | `Berlin,DE` |
-
-*i3owm* has the following optional parameters
-
-| Option              | Parameter  | Description | Default |
-|---------------------|------------|-------------|---------|
-| `-b`, `--blink`     |            | Let ISS icon blink when visible | |
-| `-h`, `--help`      |            | Prints help information | |
-| `-n`, `--notify`    |            | Show notifications about ISS getting visible | |
-| `-r`, `--reverse`   |            | Reverse position (from right) | |
-| `-t`, `--test`      |            | Do **not** process i3status from stdin, instead show formatted string | |
-| `-V`, `--version`   |            | Prints version information | |
 | `-C`, `--cloudiness` | `<cloudiness>` | Maximum cloudiness in percent at which ISS can be treated as visible | `25` |
 | `-l`, `--lang`      | `<lang>`   | Two character language code of weather descriptions | `en` |
 | `-L`, `--level`     | `<level>`  | ISS minimum show level: `watch`: duration when visible; `soon`: latency until visible; `rise`: spotting time | `soon` |
