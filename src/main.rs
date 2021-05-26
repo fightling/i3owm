@@ -312,10 +312,11 @@ fn get_spots(
                 }
                 let duration = spot.risetime - Local::now();
                 let duration = format!(
-                    "+{:02}:{:02}",
-                    duration.num_minutes(),
-                    duration.num_seconds()
-                );
+                    "+{:02}:{:02}:{:02}",
+                    duration.num_hours(),
+                    duration.num_minutes() % 60,
+                    duration.num_seconds() % 60
+                ).replace("00:","");
                 props.insert("{iss_duration}", duration);
             }
             // if not check if we have an upcoming spotting event
@@ -325,8 +326,9 @@ fn get_spots(
                     if duration < chrono::Duration::minutes(soon) {
                         props.insert("{iss_soonicon}", satellite);
                         let duration = format!(
-                            "-{:02}:{:02}",
-                            duration.num_minutes(),
+                            "-{:02}:{:02}:{:02}",
+                            duration.num_hours(),
+                            duration.num_minutes() % 60,
                             duration.num_seconds() % 60
                         );
                         props.insert("{iss_soon}", duration);
