@@ -152,6 +152,7 @@ fn main() {
                 notify_soon = true;
             }
         }
+        // toggle blinking flag
         if blink {
             blinking = !blinking;
         }
@@ -168,6 +169,10 @@ fn main() {
 }
 
 /// update properties map with new weather update data
+/// #### Parameters
+/// - `props`: property map to add data into
+/// - `current`: current weather update
+/// - `units`: maximum level of spotting display that is wanted (either `"standard"`, `"metric"` or `"imperial"`
 fn get_weather(
     props: &mut HashMap<&str, String>,
     current: &openweathermap::CurrentWeather,
@@ -296,6 +301,15 @@ enum Level {
 }
 
 /// update properties map with new open-notify data
+/// #### Parameters
+/// - `props`: property map to add data into
+/// - `spots`: spotting events from open-notify
+/// - `soon`: maximum duration in minutes which will be treated as *soon*
+/// - `visibility`: `true` if sky is visible
+/// - `blink`: `true` if icon shall blink while spotting
+/// - `level`: maximum level of spotting display that is wanted
+/// #### Return value
+/// - level of spotting display that was used
 fn get_spots(
     props: &mut HashMap<&str, String>,
     spots: &Vec<open_notify::Spot>,
@@ -316,6 +330,7 @@ fn get_spots(
         match current {
             // check if we have a current spotting event
             Some(spot) => {
+                // insert (maybe blinking) icon
                 props.insert(
                     "{iss_icon}",
                     match blink {
@@ -323,7 +338,9 @@ fn get_spots(
                         true => eye.clone(),
                     },
                 );
+                // calculate duration until current spotting event
                 let duration = spot.risetime - Local::now();
+                // format duration (remove any leading zeros)
                 let duration = format!(
                     "+{:02}:{:02}:{:02}",
                     duration.num_hours(),
@@ -331,28 +348,37 @@ fn get_spots(
                     duration.num_seconds() % 60
                 )
                 .replace("00:", "");
+                // insert duration
                 props.insert("{iss}", duration);
                 return Level::WATCH;
             }
             // if not check if we have an upcoming spotting event
             None => match upcoming {
                 Some(spot) => {
+                    // calculate duration until upcoming spotting event
                     let duration = spot.risetime - Local::now();
+                    // check if duration is soon
                     if duration < chrono::Duration::minutes(soon)
                         && [Level::SOON, Level::RISE].contains(&level)
                     {
+                        // insert icon
                         props.insert("{iss_icon}", satellite.clone());
+                        // format duration (remove any leading zeros)
                         let duration = format!(
                             "-{:02}:{:02}:{:02}",
                             duration.num_hours(),
                             duration.num_minutes() % 60,
                             duration.num_seconds() % 60
-                        );
+                        )
+                        .replace("00:", "");
+                        // insert duration
                         props.insert("{iss}", duration);
                         return Level::SOON;
                     } else if level == &Level::RISE {
+                        // insert icon
                         props.insert("{iss_icon}", satellite.clone());
-                        if duration  > chrono::Duration::days(1) {
+                        // format and insert time
+                        if duration > chrono::Duration::days(1) {
                             props.insert("{iss}", spot.risetime.format("%x %R").to_string());
                         } else {
                             props.insert("{iss}", spot.risetime.format("%R").to_string());
@@ -364,12 +390,18 @@ fn get_spots(
             },
         }
     }
+    // remove unused keys
     props.insert("{iss_icon}", empty.clone());
     props.insert("{iss}", empty.clone());
     return Level::NONE;
 }
 
 /// insert properties into format string
+/// #### Parameters
+/// - `format`: output format (string including some of the available keys)
+/// - `props`: property map to add data into
+/// #### Return value
+/// - formatted string
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {
     let mut result: String = format.to_string();
     let mut iss: bool = false;
