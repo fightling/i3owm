@@ -263,7 +263,6 @@ fn get_weather(
         .to_string(),
     );
 }
-static mut BLINK: bool = false;
 
 fn get_spots(
     props: &mut HashMap<&str, String>,
@@ -271,6 +270,7 @@ fn get_spots(
     soon: i64,
     visibility: bool,
 ) {
+    static mut BLINK: bool = false;
     // some icons
     let satellite = "🛰".to_string();
     let eye = "👁".to_string();
