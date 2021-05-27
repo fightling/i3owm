@@ -1,10 +1,18 @@
 // Note this useful idiom: importing names from outer (for mod tests) scope.
 use super::*;
 
-const APIKEY: &str = "df8f453724ddbe2befa2d20f09b4a694";
+fn apikey() -> String {
+    match std::env::var("OWM_APIKEY") {
+        Ok(key) => key,
+        Err(_r) => {
+            eprintln!("error: set API-key with environment valiable OWM_APIKEY");
+            "".to_string()
+        }
+    }
+}
 
 fn test_key(format: &str) {
-    match openweathermap::blocking::weather("Berlin,DE", "metric", "en", APIKEY) {
+    match openweathermap::blocking::weather("Berlin,DE", "metric", "en", &apikey()) {
         Ok(w) => {
             let mut props: HashMap<&str, String> = HashMap::new();
             get_weather(&mut props, &w, &"metric");
