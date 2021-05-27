@@ -14,8 +14,8 @@ keywords = ["weather", "i3wm", "i3status" ]
 
 [dependencies]
 clap = { version = "3.0.0-beta.2", features = ["yaml"] }
-chrono = "0.4.7"
-i3status_ext = "0.1.1"
-openweathermap = "0.2.2"
-open_notify = "0.1.6"
-notify-rust = "4.5.2"
+chrono = { version = "0.4.7", default-features = false }
+i3status_ext = { version = "0.1.2", default-features = false }
+openweathermap = { version = "0.2.4", default-features = false }
+open_notify = { version = "0.1.7", default-features = false }
+notify-rust = { version = "4.5.2" }
