@@ -29,7 +29,7 @@ pub fn new_properties<'a>() -> HashMap<&'a str, String> {
         &Vec::new(),
         0,
         &Visibility::VISIBLE,
-        &None,
+        None,
         false,
         &Level::RISE,
     );
@@ -52,7 +52,7 @@ pub fn get_spots(
     spots: &Vec<open_notify::Spot>,
     soon: i64,
     visibility: &Visibility,
-    daytime: &Option<DayTime>,
+    daytime: Option<&DayTime>,
     blink: bool,
     level: &Level,
 ) -> Level {
@@ -61,8 +61,8 @@ pub fn get_spots(
     let eye = "👁".to_string();
     let empty = "".to_string();
     // get current and upcoming spotting event
-    let current = open_notify::find_current(spots, daytime);
-    let upcoming = open_notify::find_upcoming(spots, daytime);
+    let current = open_notify::find_current(spots, daytime, chrono::Local::now());
+    let upcoming = open_notify::find_upcoming(spots, daytime, chrono::Local::now());
     // check if we can see the sky
     if visibility.is_visible() {
         match current {

@@ -23,7 +23,7 @@ fn test_key(format: &str) {
                         &spots,
                         30,
                         &Visibility::VISIBLE,
-                        &None,
+                        None,
                         false,
                         &Level::RISE,
                     );

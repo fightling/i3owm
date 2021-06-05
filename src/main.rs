@@ -77,7 +77,8 @@ fn main() {
     // remember visibility from weather report for ISS spotting
     let mut visibility: Visibility = Visibility::INVISIBLE;
     // remember daytime from weather report for ISS spotting
-    let mut daytime: Option<DayTime> = None;
+    let mut daytime: DayTime;
+    let mut dt: Option<&DayTime> = None;
     // remember duration of current spotting event in milliseconds for motification timeout
     let mut duration = Duration::from_millis(0);
     // create notification state
@@ -97,7 +98,8 @@ fn main() {
                     visibility = Visibility::from_bool(w.clouds.all <= max_cloudiness as f64);
                     // remember daytime from current weather if wanted
                     if !dayspot {
-                        daytime = Some(DayTime::from_utc(w.sys.sunrise, w.sys.sunset));
+                        daytime = DayTime::from_utc(w.sys.sunrise, w.sys.sunset);
+                        dt = Some(&daytime);
                     }
                     // check if we have to start open_notify thread
                     if iss.is_none() && format.contains("{iss_") {
@@ -117,7 +119,7 @@ fn main() {
                 Some(response) => match response {
                     Ok(s) => {
                         // remember duration of current spotting event in milliseconds for motification timeout
-                        duration = match open_notify::find_current(&s, &daytime) {
+                        duration = match open_notify::find_current(&s, dt, chrono::Local::now()) {
                             Some(s) => Duration::from_millis(s.duration.num_milliseconds() as u64),
                             None => Duration::from_millis(0),
                         };
@@ -143,7 +145,7 @@ fn main() {
             &spottings,
             soon,
             &visibility,
-            &daytime,
+            dt,
             blinking,
             &level,
         );
