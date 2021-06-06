@@ -63,6 +63,11 @@ fn main() {
         _ => Level::SOON,
     };
     let test = args.is_present("test");
+    let prevision = args
+        .value_of("prevision")
+        .unwrap_or("100")
+        .parse::<u8>()
+        .unwrap_or(100);
     // start our observatory via OWM
     let owm = &openweathermap::init(location, units, lang, apikey, poll);
     // open-notify receiver will get created if we get coordinates from weather update
@@ -103,7 +108,7 @@ fn main() {
                     }
                     // check if we have to start open_notify thread
                     if iss.is_none() && format.contains("{iss_") {
-                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, 90));
+                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, prevision, 90));
                     }
                     // get weather properties
                     get_weather(&mut props, &w, &units);

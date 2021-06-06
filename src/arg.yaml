@@ -141,3 +141,11 @@ args:
         short:           t
         long:            test
         about:           Do not process i3status from stdin, instead show formatted string
+    - prevision:
+        short:           T
+        long:            prevision
+        about:           Number of ISS spottings that will be fetched from open-notify.org
+        default_value:   "100"
+        takes_value:     true
+        min_values:      1
+        max_values:      100

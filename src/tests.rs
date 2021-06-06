@@ -16,7 +16,7 @@ fn test_key(format: &str) {
         Ok(w) => {
             let mut props: HashMap<&str, String> = HashMap::new();
             get_weather(&mut props, &w, &"metric");
-            match open_notify::blocking::spot(w.coord.lat, w.coord.lon, 0.0) {
+            match open_notify::blocking::spot(w.coord.lat, w.coord.lon, 0.0, 100) {
                 Ok(spots) => {
                     get_spots(
                         &mut props,
