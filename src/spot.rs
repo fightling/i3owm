@@ -124,7 +124,21 @@ pub fn get_spots(
                         return Level::RISE;
                     }
                 }
-                None => (),
+                None => {
+                    if level == &Level::FAR {
+                        match spots.last() {
+                            Some(spot) => {
+                                let duration = spot.risetime - Local::now();
+                                // insert icon
+                                props.insert("{iss_icon}", satellite.clone());
+                                // format and insert time
+                                props.insert("{iss}", format!(">{}", duration.num_days()));
+                                return Level::FAR;
+                            }
+                            _ => ()
+                        }
+                    }
+                },
             },
         }
     }

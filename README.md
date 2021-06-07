@@ -13,6 +13,7 @@ rust implementation of Open Weather Map and open-notify (ISS spotting) add-on fo
       - [Required Arguments](#required-arguments)   
       - [Options](#options)   
       - [Optional Arguments](#optional-arguments)   
+         - [ISS spotting with `--level`, `--soon` & `--prediction`](#iss-spotting-with-level-soon-prediction)   
    - [Display Format](#display-format)   
       - [Available Properties](#available-properties)   
       - [Testing your Display Format](#testing-your-display-format)   
@@ -53,28 +54,48 @@ cargo install i3owm
 
 #### Options
 
-| Option              | Parameter  | Description |
-|---------------------|------------|-------------|
-| `-b`, `--blink`     |            | Let ISS icon blink when visible |
-| `-h`, `--help`      |            | Prints help information |
-| `-n`, `--notify`    |            | Show notifications about ISS getting visible |
-| `-r`, `--reverse`   |            | Reverse position (from right) |
-| `-t`, `--test`      |            | Do **not** process i3status from stdin, instead show formatted string |
-| `-V`, `--version`   |            | Prints version information |
+| Option              |  Description |
+|---------------------|--------------|
+| `-b`, `--blink`     |  Let ISS icon blink when visible |
+| `-h`, `--help`      |  Prints help information |
+| `-n`, `--notify`    |  Show notifications about ISS getting visible |
+| `-r`, `--reverse`   |  Reverse position (from right) |
+| `-t`, `--test`      |  Do **not** process i3status from stdin, instead show formatted string |
+| `-V`, `--version`   |  Prints version information |
 
 #### Optional Arguments
 
-| Option              | Parameter  | Description | Default |
-|---------------------|------------|-------------|---------|
-| `-f`, `--format`    | `<format>` | Format string including one ore more of the following keys | `{city} {icon} {temp}{temp_unit}` |
-| `-c`, `--location`  | `<location>` | City's name maybe followed by comma-separated 2-letter (state code for the USA locations and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or geographical coordinate as comma-separated latitude and longitude. | `Berlin,DE` |
-| `-C`, `--cloudiness` | `<cloudiness>` | Maximum cloudiness in percent at which ISS can be treated as visible | `25` |
-| `-l`, `--lang`      | `<lang>`   | Two character language code of weather descriptions | `en` |
-| `-L`, `--level`     | `<level>`  | ISS minimum show level: `watch`: duration when visible; `soon`: latency until visible; `rise`: spotting time | `soon` |
-| `-P`, `--poll`      | `<poll>`   | Duration of polling period in minutes | `10` |
-| `-p`, `--position`  | `<position>` | Position of output in JSON when wrapping i3status | `0` |
-| `-s`, `--soon`      | `<soon>`   | Duration in minutes when ISS rising is "soon" in minutes | `15` |
-| `-u`, `--units`     | `<units>`  | Use imperial units (`metric`, `imperial` or `standard`) | `metric` |
+| Option              | Parameter Description | Default |
+|---------------------|-----------------------|---------|
+| `-f`, `--format`    | Format string including one ore more of the following keys | `{city} {icon} {temp}{temp_unit}` |
+| `-c`, `--location`  | City's name maybe followed by comma-separated 2-letter (state code for the USA locations and) country code (ISO3166) or city ID (see https://openweathermap.org/find) or geographical coordinate as comma-separated latitude and longitude. | `Berlin,DE` |
+| `-C`, `--cloudiness` | Maximum cloudiness in percent at which ISS can be treated as visible | `25` |
+| `-l`, `--lang`      | Two character language code of weather descriptions | `en` |
+| `-L`, `--level`     | ISS minimum show level: `watch`: duration when visible; `soon`: latency until visible; `rise`: spotting time; `far`: max. prediction time | `soon` |
+| `-P`, `--poll`      | Duration of polling period in minutes | `10` |
+| `-p`, `--position`  | Position of output in JSON when wrapping i3status | `0` |
+| `-s`, `--soon`      | Duration in minutes when ISS rising is "soon" in minutes | `15` |
+| `-u`, `--units`     | Use imperial units (`metric`, `imperial` or `standard`) | `metric` |
+| `-T`, `--prediction`| set number of predicted ISS spots | `100` |
+
+##### ISS spotting with `--level`, `--soon` & `--prediction`
+
+Just a note about what `--level` does and how it interacts with the optional arguments in `--soon` and `--prediction`:
+
+With `--level` you set what you get:
+
+| Level       | When?                        | Format             | Example          |
+|-------------|------------------------------|--------------------|------------------|
+| `watch`     | only if currently visible    | `🛰+`*duration*    | `🛰+03:12`      |
+| `soon`      | only if visible within *soon*| `🛰-`*duration*    | `🛰-12:34`      |
+| `rise`      | when there is any prediction | `🛰`*[date] time*  | `🛰12:15`      |
+| `far`       | prediction time in days if no prediction available | `🛰+`*mm*`:`*ss*   | `🛰>16`      |
+
+Levels are inclusive backwards. So if you set the level to `rise` you will see `soon` and `watch` events too.
+
+An event is "soon" if it happens within the number of minutes you set with option `--soon`.
+
+The value given by argument `--prediction` sets the number of spotting events that will be fetched from *api.open-notify.org*. So this value somehow limits the time of prediction. A maximum of 100 events is given by *api.open-notify.org*.
 
 ### Display Format
 
@@ -108,7 +129,7 @@ Choose your display format by inserting the following properties keys into your 
 | `{temp_unit}`     |  Temperature | `°C`, `°F`, `K` |
 | `{speed_unit}`    |  Wind speed unit | `m/s` |
 | `{update}`        |  Local time of last update | `12:45` |
-| `{iss}`           |  ISS spotting time, latency or duration | `12:10`, `-02:21`, `+01:15` |
+| `{iss}`           |  ISS spotting time, latency or duration | `+01:15` , `-02:21`, `12:10`, `>16` |
 | `{iss_icon}`      |  show icon if ISS is visible | `🛰` |  
 | `{iss_space}`     |  inserts space (`' '`) if any ISS information is displayed | ` ` |
 
@@ -137,8 +158,10 @@ loading...
 To get ISS spotting events we could use the following parameters:
 
 ```
-i3owm -t -k <key> -c Berlin,DE -f '{iss_icon}{iss}'
+i3owm -t -Lrise -k <key> -c Berlin,DE -f '{iss_icon}{iss}{iss_space}info'
 ```
+
+This example would show the satellite icon, a time for ISS spotting and a space ` ` separator if any prediction can be made:
 
 ##### Output
 
@@ -146,6 +169,8 @@ i3owm -t -k <key> -c Berlin,DE -f '{iss_icon}{iss}'
 loading...
 🛰+03:12
 ```
+
+This would mean that ISS is already visible for 3:12 minutes.
 
 #### Complex Example
 

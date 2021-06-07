@@ -7,4 +7,6 @@ pub enum Level {
     SOON,
     /// show time of next spotting event (includes 'soon' and 'watch')
     RISE,
+    /// show prediction time if no spotting event was found
+    FAR,
 }

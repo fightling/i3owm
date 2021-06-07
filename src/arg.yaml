@@ -128,7 +128,7 @@ args:
             rise = show time of next spotting event (includes 'soon' and 'watch')
         default_value:   soon
         takes_value:     true
-        possible_values: [ watch, soon, rise ]
+        possible_values: [ watch, soon, rise, far ]
     - blink:
         short:           b
         long:            blink

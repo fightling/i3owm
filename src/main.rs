@@ -60,6 +60,7 @@ fn main() {
     let level = match level {
         "watch" => Level::WATCH,
         "rise" => Level::RISE,
+        "far" => Level::FAR,
         _ => Level::SOON,
     };
     let test = args.is_present("test");
