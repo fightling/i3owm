@@ -89,7 +89,7 @@ With `--level` you set what you get:
 | `watch`     | only if currently visible    | `🛰+`*duration*    | `🛰+03:12`      |
 | `soon`      | only if visible within *soon*| `🛰-`*duration*    | `🛰-12:34`      |
 | `rise`      | when there is any prediction | `🛰`*[date] time*  | `🛰12:15`      |
-| `far`       | prediction time in days if no prediction available | `🛰+`*mm*`:`*ss*   | `🛰>16`      |
+| `far`       | prediction time in days if no prediction available | `🛰>`*days*   | `🛰>16`      |
 
 Levels are inclusive backwards. So if you set the level to `rise` you will see `soon` and `watch` events too.
 
