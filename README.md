@@ -17,12 +17,9 @@ rust implementation of Open Weather Map and open-notify (ISS spotting) add-on fo
    - [Display Format](#display-format)   
       - [Available Properties](#available-properties)   
       - [Testing your Display Format](#testing-your-display-format)   
-      - [Weather](#weather)   
-         - [Output](#output)   
-      - [ISS Spotting Events](#iss-spotting-events)   
-         - [Output](#output)   
-      - [Complex Example](#complex-example)   
-         - [Output](#output)   
+         - [Weather](#weather)   
+         - [ISS Spotting Events](#iss-spotting-events)   
+         - [Complex Example](#complex-example)   
    - [Integration into i3status](#integration-into-i3status)   
 - [Reference Documentation](#reference-documentation)   
 - [Links](#links)   
@@ -138,7 +135,7 @@ Choose your display format by inserting the following properties keys into your 
 To make testing easy *i3owm* has an option `-t` (or `--test`) which disables processing of input from i3status and just produces the *i3owm* related output string.
 We use that option to test some examples without *i3status*.
 
-#### Weather
+##### Weather
 
 To get the weather we could use the following command line:
 
@@ -146,14 +143,14 @@ To get the weather we could use the following command line:
 i3owm -t -k <key> -c Berlin,DE -f '{icon} {temp}{temp_unit} 💧{humidity}%'
 ```
 
-##### Output
+###### Output
 
 ```
 loading...
 ⛅ 11°C 💧55%
 ```
 
-#### ISS Spotting Events
+##### ISS Spotting Events
 
 To get ISS spotting events we could use the following parameters:
 
@@ -163,7 +160,7 @@ i3owm -t -Lrise -k <key> -c Berlin,DE -f '{iss_icon}{iss}{iss_space}info'
 
 This example would show the satellite icon, a time for ISS spotting and a space ` ` separator if any prediction can be made:
 
-##### Output
+###### Output
 
 ```
 loading...
@@ -172,7 +169,7 @@ loading...
 
 This would mean that ISS is already visible for 3:12 minutes.
 
-#### Complex Example
+##### Complex Example
 
 In this complex example we use the following parameters:
 
@@ -180,7 +177,7 @@ In this complex example we use the following parameters:
 i3owm -tnb -Lrise -C100 -k <key> -cBerlin -f'{iss_icon}{iss}{iss_space}{icon} {temp}{temp_unit} 💧{humidity}% {wind_icon}{wind_speed}{speed_unit} ({update})'
 ```
 
-##### Output
+###### Output
 
 ```
 loading...
