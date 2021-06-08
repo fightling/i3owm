@@ -155,7 +155,7 @@ loading...
 To get ISS spotting events we could use the following parameters:
 
 ```
-i3owm -t -Lrise -k <key> -c Berlin,DE -f '{iss_icon}{iss}{iss_space}info'
+i3owm -t -Lrise -k <key> -c Berlin,DE -f 'before {iss_icon}{iss}{iss_space}after'
 ```
 
 This example would show the satellite icon, a time for ISS spotting and a space ` ` separator if any prediction can be made:
@@ -164,8 +164,16 @@ This example would show the satellite icon, a time for ISS spotting and a space 
 
 ```
 loading...
-🛰+03:12
+before 🛰+03:12 after
 ```
+...or...
+
+```
+loading...
+before after
+```
+
+...if no ISS status is available.
 
 This would mean that ISS is already visible for 3:12 minutes.
 
