@@ -97,7 +97,7 @@ pub fn get_spots(
                     let duration = spot.risetime - Local::now();
                     // check if duration is soon
                     if duration < chrono::Duration::minutes(soon)
-                        && [Level::SOON, Level::RISE].contains(&level)
+                        && [Level::SOON, Level::RISE, Level::FAR].contains(&level)
                     {
                         // insert icon
                         props.insert("{iss_icon}", satellite.clone());
@@ -112,7 +112,7 @@ pub fn get_spots(
                         // insert duration
                         props.insert("{iss}", duration);
                         return Level::SOON;
-                    } else if level == &Level::RISE {
+                    } else if [Level::RISE, Level::FAR].contains(&level) {
                         // insert icon
                         props.insert("{iss_icon}", satellite.clone());
                         // format and insert time

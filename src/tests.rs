@@ -2,9 +2,6 @@
 use super::*;
 use regex::Regex;
 
-const satellite: &str = "🛰";
-const eye: &str = "👁";
-
 fn apikey() -> String {
     match std::env::var("OWM_APIKEY") {
         Ok(key) => key,
