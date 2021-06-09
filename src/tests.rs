@@ -19,15 +19,7 @@ fn test_key(format: &str, level: &Level, n: u8) -> String {
             get_weather(&mut props, &w, &"metric");
             match open_notify::blocking::spot(w.coord.lat, w.coord.lon, 0.0, n) {
                 Ok(spots) => {
-                    get_spots(
-                        &mut props,
-                        &spots,
-                        30,
-                        &Visibility::VISIBLE,
-                        None,
-                        false,
-                        &level,
-                    );
+                    get_spots(&mut props, &spots, 30, true, None, false, &level);
                     let s = format_string(format, &props);
                     // check if all keys have been replaced
                     assert!(s.find("{").is_none());
@@ -66,16 +58,16 @@ fn test_keydoublette() {
 
 #[test]
 fn test_iss_levels() {
-    let far = Regex::new(r"🛰\d+" ).unwrap();
-    let rise = Regex::new(r"🛰(\d?\d\.\d?\d\.\d\d\d\d)?(\d?\d:)?\d?\d" ).unwrap();
-    let soon = Regex::new(r"🛰-((\d\d:)?\d\d:)?\d\d" ).unwrap();
-    let watch = Regex::new(r"[🛰👁]\+((\d?\d:)?\d?\d:)?\d\d" ).unwrap();
+    let far = Regex::new(r"🛰\d+").unwrap();
+    let rise = Regex::new(r"🛰(\d?\d\.\d?\d\.\d\d\d\d)?(\d?\d:)?\d?\d").unwrap();
+    let soon = Regex::new(r"🛰-((\d\d:)?\d\d:)?\d\d").unwrap();
+    let watch = Regex::new(r"[🛰👁]\+((\d?\d:)?\d?\d:)?\d\d").unwrap();
     let s = test_key(&"{iss_icon}{iss}{iss_space}", &Level::FAR, 100);
     assert!(far.is_match(&s) || rise.is_match(&s) || soon.is_match(&s) || watch.is_match(&s));
     let s = test_key(&"{iss_icon}{iss}{iss_space}", &Level::RISE, 100);
-    assert!( s.is_empty() || rise.is_match(&s) || soon.is_match(&s) || watch.is_match(&s));
+    assert!(s.is_empty() || rise.is_match(&s) || soon.is_match(&s) || watch.is_match(&s));
     let s = test_key(&"{iss_icon}{iss}{iss_space}", &Level::SOON, 100);
-    assert!( s.is_empty() || soon.is_match(&s) || watch.is_match(&s));
+    assert!(s.is_empty() || soon.is_match(&s) || watch.is_match(&s));
     let s = test_key(&"{iss_icon}{iss}{iss_space}", &Level::WATCH, 100);
-    assert!( s.is_empty() || watch.is_match(&s));
+    assert!(s.is_empty() || watch.is_match(&s));
 }

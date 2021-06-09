@@ -3,24 +3,6 @@ use std::collections::HashMap;
 pub use open_notify::DayTime;
 use crate::level::Level;
 
-#[derive(PartialEq, Eq)]
-pub enum Visibility {
-    VISIBLE,
-    INVISIBLE,
-}
-
-impl Visibility {
-    pub fn from_bool(visible: bool) -> Visibility {
-        match visible {
-            true => Visibility::VISIBLE,
-            false => Visibility::INVISIBLE,
-        }
-    }
-    fn is_visible(&self) -> bool {
-        self == &Visibility::VISIBLE
-    }
-}
-
 pub fn new_properties<'a>() -> HashMap<&'a str, String> {
     let mut props: HashMap<&str, String> = HashMap::new();
     // insert empty values to all spotting properties (so that we can replace them when ISS report is still missing)
@@ -28,7 +10,7 @@ pub fn new_properties<'a>() -> HashMap<&'a str, String> {
         &mut props,
         &Vec::new(),
         0,
-        &Visibility::VISIBLE,
+        true,
         None,
         false,
         &Level::RISE,
@@ -40,8 +22,8 @@ pub fn new_properties<'a>() -> HashMap<&'a str, String> {
 /// #### Parameters
 /// - `props`: property map to add data into
 /// - `spots`: spotting events from open-notify
-/// - `soon`: maximum duration in minutes which will be treated as *soon*
-/// - `visibility`: `true` if sky is visible
+/// - `soon_mins`: maximum duration in minutes which will be treated as *soon*
+/// - `visible`: `true` if sky is visible
 /// - `daytime`: some daytime if spotting at daytime should be skipped
 /// - `blink`: `true` if icon shall blink while spotting
 /// - `level`: maximum level of spotting display that is wanted
@@ -50,8 +32,8 @@ pub fn new_properties<'a>() -> HashMap<&'a str, String> {
 pub fn get_spots(
     props: &mut HashMap<&str, String>,
     spots: &Vec<open_notify::Spot>,
-    soon: i64,
-    visibility: &Visibility,
+    soon_mins: i64,
+    visible: bool,
     daytime: Option<&DayTime>,
     blink: bool,
     level: &Level,
@@ -64,7 +46,7 @@ pub fn get_spots(
     let current = open_notify::find_current(spots, daytime, chrono::Local::now());
     let upcoming = open_notify::find_upcoming(spots, daytime, chrono::Local::now());
     // check if we can see the sky
-    if visibility.is_visible() {
+    if visible {
         match current {
             // check if we have a current spotting event
             Some(spot) => {
@@ -96,7 +78,7 @@ pub fn get_spots(
                     // calculate duration until upcoming spotting event
                     let duration = spot.risetime - Local::now();
                     // check if duration is soon
-                    if duration < chrono::Duration::minutes(soon)
+                    if duration < chrono::Duration::minutes(soon_mins)
                         && [Level::SOON, Level::RISE, Level::FAR].contains(&level)
                     {
                         // insert icon

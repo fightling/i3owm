@@ -81,7 +81,7 @@ fn main() {
     // we may override format for error messages
     let mut format_str = openweathermap::LOADING.to_string();
     // remember visibility from weather report for ISS spotting
-    let mut visibility: Visibility = Visibility::INVISIBLE;
+    let mut visible: bool = false;
     // remember daytime from weather report for ISS spotting
     let mut daytime: DayTime;
     let mut dt: Option<&DayTime> = None;
@@ -101,7 +101,7 @@ fn main() {
             Some(response) => match response {
                 Ok(w) => {
                     // remember cloudiness for spotting visibility
-                    visibility = Visibility::from_bool(w.clouds.all <= max_cloudiness as f64);
+                    visible = w.clouds.all <= max_cloudiness as f64;
                     // remember daytime from current weather if wanted
                     if !dayspot {
                         daytime = DayTime::from_utc(w.sys.sunrise, w.sys.sunset);
@@ -150,7 +150,7 @@ fn main() {
             &mut props,
             &spottings,
             soon,
-            &visibility,
+            visible,
             dt,
             blinking,
             &level,
