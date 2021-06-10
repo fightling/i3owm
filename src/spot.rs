@@ -50,6 +50,8 @@ pub fn get_spots(
         match current {
             // check if we have a current spotting event
             Some(spot) => {
+                // insert space property
+                props.insert("{iss_space}", " ".to_string());
                 // insert (maybe blinking) icon
                 props.insert(
                     "{iss_icon}",
@@ -81,6 +83,8 @@ pub fn get_spots(
                     if duration < chrono::Duration::minutes(soon_mins)
                         && [Level::SOON, Level::RISE, Level::FAR].contains(&level)
                     {
+                        // insert space property
+                        props.insert("{iss_space}", " ".to_string());
                         // insert icon
                         props.insert("{iss_icon}", satellite.clone());
                         // format duration (remove any leading zeros)
@@ -95,6 +99,8 @@ pub fn get_spots(
                         props.insert("{iss}", duration);
                         return Level::SOON;
                     } else if [Level::RISE, Level::FAR].contains(&level) {
+                        // insert space property
+                        props.insert("{iss_space}", " ".to_string());
                         // insert icon
                         props.insert("{iss_icon}", satellite.clone());
                         // format and insert time
@@ -110,6 +116,8 @@ pub fn get_spots(
                     if level == &Level::FAR {
                         match spots.last() {
                             Some(spot) => {
+                                // insert space property
+                                props.insert("{iss_space}", " ".to_string());
                                 let duration = spot.risetime - Local::now();
                                 // insert icon
                                 props.insert("{iss_icon}", satellite.clone());
