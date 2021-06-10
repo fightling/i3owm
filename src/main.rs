@@ -87,7 +87,7 @@ fn main() {
     let mut dt: Option<&DayTime> = None;
     // remember duration of current spotting event in milliseconds for motification timeout
     let mut duration = Duration::from_millis(0);
-    // create notification state
+    // state of current notification
     let mut notify = Notify::new(notify);
     // create blinking flag
     let mut blinking: bool = false;
@@ -155,6 +155,7 @@ fn main() {
             blinking,
             &level,
         );
+        // check if we shall generate a notification
         notify.notification(duration, level);
         // toggle blinking flag
         if blink {
@@ -174,7 +175,7 @@ fn main() {
 /// insert properties into format string
 /// #### Parameters
 /// - `format`: output format (string including some of the available keys)
-/// - `props`: property map to add data into
+/// - `props`: property map to get data to insert from
 /// #### Return value
 /// - formatted string
 fn format_string(format: &str, props: &HashMap<&str, String>) -> String {

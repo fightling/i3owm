@@ -2,6 +2,7 @@ use std::time::Duration;
 use notify_rust::{Notification, Urgency};
 use crate::level::Level;
 
+/// state of the current notification to prevent multiple notifications appear at the same time
 pub struct Notify {
     suppress: bool,
     soon: bool,
@@ -9,6 +10,11 @@ pub struct Notify {
 }
 
 impl Notify {
+    /// create a notification state and initialize
+    /// #### Parameters
+    /// - `suppress`: supress any notification if true
+    /// #### Return value
+    /// returns the state instance
     pub fn new(suppress: bool) -> Notify {
         Notify {
             suppress: suppress,
@@ -16,6 +22,10 @@ impl Notify {
             visible: true,
         }
     }
+    /// notify user about soon or current spotting ISS
+    /// #### Parameters
+    /// - `duration`: duration of the notification to appear
+    /// - `level`: current spotting level
     pub fn notification(&mut self, duration: Duration, level: Level) {
         match level {
             Level::SOON => {
