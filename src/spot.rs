@@ -104,8 +104,10 @@ pub fn get_spots(
                         // insert icon
                         props.insert("{iss_icon}", satellite.clone());
                         // format and insert time
-                        if duration > chrono::Duration::days(1) {
-                            props.insert("{iss}", spot.risetime.format("%x %R").to_string());
+                        if duration > chrono::Duration::days(2) {
+                            props.insert("{iss}", format!("{}d", duration.num_days()));
+                        } else if duration > chrono::Duration::days(1) {
+                            props.insert("{iss}", format!("{}h", duration.num_hours()));
                         } else {
                             props.insert("{iss}", spot.risetime.format("%R").to_string());
                         }
