@@ -109,7 +109,13 @@ fn main() {
                     }
                     // check if we have to start open_notify thread
                     if iss.is_none() && format.contains("{iss_") {
-                        iss = Some(open_notify::init(w.coord.lat, w.coord.lon, 0.0, prevision, 90));
+                        iss = Some(open_notify::init(
+                            w.coord.lat,
+                            w.coord.lon,
+                            0.0,
+                            prevision,
+                            90,
+                        ));
                     }
                     // get weather properties
                     get_weather(&mut props, &w, &units);
@@ -146,15 +152,7 @@ fn main() {
             None => (),
         }
         // continuously get spot properties
-        let level = get_spots(
-            &mut props,
-            &spottings,
-            soon,
-            visible,
-            dt,
-            blinking,
-            &level,
-        );
+        let level = get_spots(&mut props, &spottings, soon, visible, dt, blinking, &level);
         // check if we shall generate a notification
         notify.notification(duration, level);
         // toggle blinking flag
