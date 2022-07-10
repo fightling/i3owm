@@ -1,6 +1,6 @@
 [package]
 name = "i3owm"
-version = "0.2.16"
+version = "0.2.17"
 authors = ["Patrick Hoffmann fightling@elektropost.org>"]
 edition = "2018"
 description = "Weather and ISS spotting extension for i3status"
