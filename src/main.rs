@@ -39,47 +39,66 @@ struct Args {
     /// Display format string
     ///
     /// Format string including one ore more of the following keys
-    ///     {city}          City name
-    ///     {main}          Group of weather parameters (Rain, Snow, Extreme
-    ///                     etc.)
-    ///     {description}   Weather condition within the group
-    ///     {icon}          Weather icon
-    ///     {pressure}      Atmospheric pressure (on the sea level, if there is
-    ///                     no sea_level or grnd_level data), hPa
-    ///     {humidity}      Humidity, %
-    ///     {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
-    ///     {wind_icon}     Wind direction as arrow icon
-    ///     {wind_speed}    Wind speed, {speed_unit}
-    ///     {wind_deg}      Wind direction, degrees (meteorological)
-    ///     {deg_unit}      Direction unit (degrees: °)
-    ///     {visibility}    Visibility, meter
-    ///     {visibility_km} Visibility, kilometer
-    ///     {rain.1h}       Rain volume for the last 1 hour, mm
-    ///     {rain.3h}       Rain volume for the last 3 hours, mm
-    ///     {snow.1h}       Snow volume for the last 1 hour, mm
-    ///     {snow.3h}       Snow volume for the last 3 hours, mm
-    ///     {temp_min}      Minimum temperature at the moment. This is minimal currently observed
-    ///                     temperature (within large megalopolises and urban areas), {temp_unit}
-    ///         {temp_max}      Maximum temperature at the moment. This is maximal
-    ///                         currently observed temperature (within large
-    ///                         megalopolises and urban areas), {temp_unit}
-    ///         {feels_like}    Temperature. This temperature parameter accounts
-    ///                         for the human perception of weather, {temp_unit}
-    ///         {temp}          Temperature, {temp_unit}
-    ///         {temp_unit}     Temperature
-    ///                         (standard=K, metric=°C, imperial=°F)
-    ///         {speed_unit}    Wind speed unit
-    ///                         (standard=m/s, metric=m/s, imperial=mi/h)
-    ///         {update}        Local time of last update, HH:MM
-    ///         {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss)
-    ///                         or duration (+hh::mm::ss)
-    ///         {iss_icon}      show 🛰  if ISS is visible
-    ///         {iss_space}     space (' ') if any ISS information is displayed
-    #[clap(short='c', long, value_parser, default_value_t=String::from("{city} {icon} {temp}{temp_unit}"))]
+    ///
+    ///   {city}          City name
+    ///
+    ///   {main}          Group of weather parameters (Rain, Snow, Extreme etc.)
+    ///
+    ///   {description}   Weather condition within the group
+    ///
+    ///   {icon}          Weather icon
+    ///
+    ///   {pressure}      Atmospheric pressure (on the sea level, if there is no sea_level or grnd_level data), hPa
+    ///
+    ///   {humidity}      Humidity, %
+    ///
+    ///   {wind}          Wind direction as N, NW, W, SW, S, SO, O or NO
+    ///
+    ///   {wind_icon}     Wind direction as arrow icon
+    ///
+    ///   {wind_speed}    Wind speed, {speed_unit}
+    ///
+    ///   {wind_deg}      Wind direction, degrees (meteorological)
+    ///
+    ///   {deg_unit}      Direction unit (degrees: °)
+    ///
+    ///   {visibility}    Visibility, meter
+    ///
+    ///   {visibility_km} Visibility, kilometer
+    ///
+    ///   {rain.1h}       Rain volume for the last 1 hour, mm
+    ///
+    ///   {rain.3h}       Rain volume for the last 3 hours, mm
+    ///
+    ///   {snow.1h}       Snow volume for the last 1 hour, mm
+    ///
+    ///   {snow.3h}       Snow volume for the last 3 hours, mm
+    ///
+    ///   {temp_min}      Minimum temperature at the moment. This is minimal currently observed temperature (within large megalopolises and urban areas), {temp_unit}
+    ///
+    ///   {temp_max}      Maximum temperature at the moment. This is maximal currently observed temperature (within large megalopolises and urban areas), {temp_unit}
+    ///
+    ///   {feels_like}    Temperature. This temperature parameter accounts for the human perception of weather, {temp_unit}
+    ///
+    ///   {temp}          Temperature, {temp_unit}
+    ///
+    ///   {temp_unit}     Temperature (standard=K, metric=°C, imperial=°F)
+    ///
+    ///   {speed_unit}    Wind speed unit
+    ///                   (standard=m/s, metric=m/s, imperial=mi/h)
+    ///
+    ///   {update}        Local time of last update, HH:MM
+    ///
+    ///   {iss}           ISS spotting time (HH:MM) or latency (-hh::mm::ss) or duration (+hh::mm::ss)
+    ///
+    ///   {iss_icon}      show 🛰  if ISS is visible
+    ///
+    ///   {iss_space}     space (' ') if any ISS information is displayed
+    #[clap(short, long, value_parser, default_value_t=String::from("{city} {icon} {temp}{temp_unit}"))]
     format: String,
 
     /// Position of output in JSON when wrapping i3status
-    #[clap(short, long = "lang", value_parser, default_value_t = 0)]
+    #[clap(short, long, value_parser, default_value_t = 0)]
     position: usize,
 
     /// Two character language code of weather descriptions
