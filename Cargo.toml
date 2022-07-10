@@ -13,10 +13,11 @@ keywords = ["weather", "i3wm", "i3status" ]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "3.0.0-beta.2", features = ["yaml"] }
+version = "3.0.0"
+clap = { version = "3.x", features = ["derive"] }
 chrono = { version = "0.4.7", default-features = false }
 i3status_ext = { version = "0.1.2", default-features = false }
 openweathermap = { version = "0.2.4", default-features = false }
 open_notify = { version = "0.1.9", default-features = false }
-notify-rust = { version = "4.5.2" }
+notify-rust = { version = "4.5.8" }
 regex = { version = "1.5.4" }
